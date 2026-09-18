@@ -1,0 +1,9 @@
+﻿ultralytics
+roboflow
+opencv-python
+matplotlib
+seaborn
+pandas
+numpy
+pyyaml
+tqdm
