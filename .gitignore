@@ -1,4 +1,4 @@
-﻿data/
+data/
 
 venv/
 env/
@@ -17,3 +17,6 @@ results/weights/
 .idea/
 .DS_Store
 Thumbs.db
+
+# FastAPI server log
+server.log

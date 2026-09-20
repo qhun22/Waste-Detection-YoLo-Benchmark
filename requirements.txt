@@ -1,9 +1,15 @@
 ﻿ultralytics
+fastapi
+uvicorn[standard]
+python-multipart
+jinja2
 roboflow
 opencv-python
+pillow
 matplotlib
 seaborn
 pandas
 numpy
 pyyaml
 tqdm
+gradio

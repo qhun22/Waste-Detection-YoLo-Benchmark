@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoVision AI — Phân Loại Rác Thải</title>
+  <meta name="description" content="Hệ thống phân loại rác thải thông minh sử dụng YOLO AI trên CPU Intel." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Signika:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <div class="app-wrapper">
+
+    <!-- ── Header ─────────────────────────────────────────────── -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">♻</div>
+        <div class="brand-text">
+          <h1>EcoVision <span class="brand-accent">AI</span></h1>
+          <p>Hệ Thống Phân Loại Rác Thải Thông Minh</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="badge badge-model">YOLOv8s / YOLO11n</span>
+        <span class="badge badge-cpu">CPU Optimized</span>
+        <div class="header-dot-sep"></div>
+        <span class="badge badge-uni">Học Máy · ICTU</span>
+      </div>
+    </header>
+
+    <!-- ── Tab Nav ─────────────────────────────────────────────── -->
+    <nav class="tab-nav" role="tablist">
+      <button id="tab-btn-webcam" class="tab-btn active" role="tab"
+              aria-selected="true" aria-controls="tab-webcam"
+              onclick="switchTab('webcam')">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 10l4.553-2.069A1 1 0 0121 8.882v6.235a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/>
+        </svg>
+        Webcam Trực Tiếp
+      </button>
+      <button id="tab-btn-image" class="tab-btn" role="tab"
+              aria-selected="false" aria-controls="tab-image"
+              onclick="switchTab('image')">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+          <path d="M21 15l-5-5L5 21"/>
+        </svg>
+        Nhận Diện Qua Ảnh
+      </button>
+      <div class="tab-slider" id="tab-slider"></div>
+    </nav>
+
+    <!-- ── Main ────────────────────────────────────────────────── -->
+    <main class="app-main">
+
+      <!-- ── Tab 1: Webcam ─────────────────────────────────────── -->
+      <section id="tab-webcam" class="tab-content active" role="tabpanel">
+        <div class="webcam-layout">
+
+          <!-- Stream -->
+          <div class="stream-card">
+            <div class="stream-topbar">
+              <div class="live-pill">
+                <span class="live-dot" id="live-dot"></span>
+                <span>LIVE</span>
+              </div>
+              <div class="stream-stats" id="stream-stats">
+                <div class="stat-chip" id="fps-chip">
+                  <span class="stat-label">FPS</span>
+                  <span class="stat-val" id="fps-val">—</span>
+                </div>
+                <div class="stat-chip" id="det-chip">
+                  <span class="stat-label">Phát hiện</span>
+                  <span class="stat-val" id="det-val">—</span>
+                </div>
+              </div>
+            </div>
+            <div class="stream-body">
+              <img id="cam-img" src="" alt="Webcam MJPEG Stream" class="stream-img" />
+              <div id="stream-overlay" class="stream-overlay">
+                <div class="stream-overlay-inner">
+                  <div class="spinner"></div>
+                  <p>Đang kết nối camera...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Side Panel -->
+          <aside class="webcam-sidebar">
+
+            <!-- Config -->
+            <div class="side-card">
+              <div class="side-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M20 12h-1M5 12H4M12 20v-1M12 5V4"/></svg>
+                Cấu Hình
+              </div>
+              <div class="conf-group">
+                <div class="conf-label-row">
+                  <span>Ngưỡng Tin Cậy</span>
+                  <span class="conf-badge" id="conf-badge">0.45</span>
+                </div>
+                <input type="range" id="conf-slider" class="slider"
+                       min="0.30" max="0.85" step="0.05" value="0.45"
+                       aria-label="Ngưỡng tin cậy"
+                       oninput="onConfChange(this.value)" />
+                <div class="slider-labels">
+                  <span>0.30</span><span>Chính xác cao</span><span>0.85</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="side-card">
+              <div class="side-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 20H5a2 2 0 01-2-2V6a2 2 0 012-2h4m6 16h4a2 2 0 002-2V6a2 2 0 00-2-2h-4M9 20V4m6 16V4"/></svg>
+                Hướng Dẫn Phân Loại
+              </div>
+              <div class="legend">
+                <div class="legend-item">
+                  <span class="legend-dot organic"></span>
+                  <div class="legend-body">
+                    <strong>Rác Hữu Cơ</strong>
+                    <span>Thùng Xanh Lá — BIODEGRADABLE</span>
+                  </div>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-dot recycle"></span>
+                  <div class="legend-body">
+                    <strong>Rác Tái Chế / Vô Cơ</strong>
+                    <span>Thùng Xanh Dương — CARDBOARD, GLASS, METAL, PAPER, PLASTIC</span>
+                  </div>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-dot other"></span>
+                  <div class="legend-body">
+                    <strong>Rác Khác</strong>
+                    <span>Thùng Cam</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Model Info -->
+            <div class="side-card">
+              <div class="side-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+                Thông Tin Mô Hình
+              </div>
+              <div class="info-grid">
+                <div class="info-cell"><span class="info-k">Model</span><span class="info-v">YOLO11n</span></div>
+                <div class="info-cell"><span class="info-k">Input</span><span class="info-v">320 × 320</span></div>
+                <div class="info-cell"><span class="info-k">Device</span><span class="info-v">CPU</span></div>
+                <div class="info-cell"><span class="info-k">Max Det</span><span class="info-v">10</span></div>
+              </div>
+            </div>
+
+          </aside>
+        </div>
+      </section>
+
+      <!-- ── Tab 2: Image ──────────────────────────────────────── -->
+      <section id="tab-image" class="tab-content" role="tabpanel">
+        <div class="image-layout">
+
+          <!-- Upload Panel -->
+          <div class="upload-panel">
+            <div id="upload-area" class="upload-area"
+                 ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+              <div class="upload-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="56" height="56">
+                  <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 12V4m0 0l-3 3m3-3l3 3"/>
+                  <path d="M4 12.5V5a1 1 0 011-1h14a1 1 0 011 1v7.5" stroke-dasharray="3 3"/>
+                </svg>
+              </div>
+              <p class="upload-title">Kéo &amp; Thả Ảnh Vào Đây</p>
+              <p class="upload-sub">hoặc nhấn để chọn từ máy tính</p>
+              <button class="btn-select" onclick="document.getElementById('file-input').click()">
+                Chọn Tệp Ảnh
+              </button>
+              <p class="upload-hint">Hỗ trợ JPG · PNG · WEBP · BMP</p>
+              <input type="file" id="file-input" accept="image/*" hidden onchange="handleFileSelect(this)" />
+            </div>
+
+            <div id="preview-wrap" class="preview-wrap hidden">
+              <div class="preview-card">
+                <img id="preview-img" src="" alt="Preview ảnh đã chọn" class="preview-img" />
+                <button class="btn-reset" onclick="resetUpload()" aria-label="Chọn ảnh khác">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  Chọn Ảnh Khác
+                </button>
+              </div>
+              <button id="btn-predict" class="btn-predict" onclick="runPrediction()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                Phân Loại Ngay
+              </button>
+            </div>
+          </div>
+
+          <!-- Results Panel -->
+          <div class="results-panel" id="results-panel">
+            <div id="result-placeholder" class="result-placeholder">
+              <div class="placeholder-icon" aria-hidden="true">
+                <svg viewBox="0 0 64 64" fill="none" width="64" height="64">
+                  <circle cx="32" cy="32" r="30" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 4" opacity=".3"/>
+                  <path d="M32 20v12M32 36v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <p class="placeholder-text">Tải ảnh lên để bắt đầu phân tích</p>
+              <p class="placeholder-sub">Kết quả sẽ hiển thị tại đây</p>
+            </div>
+
+            <div id="result-content" class="result-content hidden">
+              <div class="result-img-wrap">
+                <img id="result-img" src="" alt="Ảnh kết quả phân loại" class="result-img" />
+              </div>
+              <div class="result-meta" id="result-meta">
+                <span id="result-count-badge"></span>
+              </div>
+              <div id="detection-list" class="detection-list"></div>
+            </div>
+
+            <div id="loading-overlay" class="loading-overlay hidden">
+              <div class="spinner large"></div>
+              <p>Đang phân tích ảnh...</p>
+              <p class="loading-sub">YOLOv8s · imgsz=640</p>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ── Footer ──────────────────────────────────────────────── -->
+    <footer class="app-footer">
+      <p>Học phần Học Máy · ICTU · Phân loại rác thải tự động bằng YOLO AI &nbsp;|&nbsp; CPU: Intel Vivobook X1505VA</p>
+    </footer>
+
+  </div><!-- /.app-wrapper -->
+
+  <script>
+    /* ═══════════════════════════════════════════════════
+       State
+    ═══════════════════════════════════════════════════ */
+    let currentTab    = 'webcam';
+    let statsInterval = null;
+    let selectedFile  = null;
+
+    /* ═══════════════════════════════════════════════════
+       Tab Switching
+    ═══════════════════════════════════════════════════ */
+    function switchTab(tab) {
+      if (tab === currentTab) return;
+      currentTab = tab;
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        const active = btn.id === `tab-btn-${tab}`;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-selected', String(active));
+      });
+      document.querySelectorAll('.tab-content').forEach(el => {
+        el.classList.toggle('active', el.id === `tab-${tab}`);
+      });
+
+      if (tab === 'webcam') startStream();
+      else                  stopStream();
+    }
+
+    /* ═══════════════════════════════════════════════════
+       Webcam Stream
+    ═══════════════════════════════════════════════════ */
+    function startStream() {
+      const img     = document.getElementById('cam-img');
+      const overlay = document.getElementById('stream-overlay');
+      const liveDot = document.getElementById('live-dot');
+
+      overlay.style.display = 'flex';
+      liveDot.classList.remove('live-dot-active');
+
+      // Cache-buster để buộc browser mở kết nối mới
+      img.src = `/video_feed?t=${Date.now()}`;
+
+      img.onload = () => {
+        overlay.style.display = 'none';
+        liveDot.classList.add('live-dot-active');
+      };
+
+      img.onerror = () => {
+        overlay.innerHTML = `<div class="stream-overlay-inner">
+          <p style="color:#ef4444;">⚠ Không thể kết nối camera.<br/>Kiểm tra webcam và khởi động lại server.</p>
+        </div>`;
+      };
+
+      statsInterval = setInterval(fetchStats, 1200);
+    }
+
+    function stopStream() {
+      const img = document.getElementById('cam-img');
+      img.src = '';
+      document.getElementById('live-dot').classList.remove('live-dot-active');
+      if (statsInterval) { clearInterval(statsInterval); statsInterval = null; }
+      document.getElementById('fps-val').textContent = '—';
+      document.getElementById('det-val').textContent = '—';
+    }
+
+    async function fetchStats() {
+      try {
+        const r    = await fetch('/api/cam-stats');
+        const data = await r.json();
+        document.getElementById('fps-val').textContent = data.fps;
+        document.getElementById('det-val').textContent = data.detections;
+      } catch (_) {}
+    }
+
+    /* ── Confidence Slider ── */
+    let confDebounce = null;
+    function onConfChange(val) {
+      document.getElementById('conf-badge').textContent = parseFloat(val).toFixed(2);
+      clearTimeout(confDebounce);
+      confDebounce = setTimeout(async () => {
+        try { await fetch(`/api/set-conf?conf=${val}`, { method: 'POST' }); } catch (_) {}
+      }, 300);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       Image Upload
+    ═══════════════════════════════════════════════════ */
+    function handleFileSelect(input) {
+      const f = input.files[0];
+      if (f) loadFile(f);
+    }
+
+    function loadFile(file) {
+      selectedFile = file;
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById('preview-img').src = e.target.result;
+        document.getElementById('upload-area').classList.add('hidden');
+        document.getElementById('preview-wrap').classList.remove('hidden');
+        resetResults();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function resetUpload() {
+      selectedFile = null;
+      document.getElementById('file-input').value = '';
+      document.getElementById('upload-area').classList.remove('hidden');
+      document.getElementById('preview-wrap').classList.add('hidden');
+      resetResults();
+    }
+
+    function resetResults() {
+      document.getElementById('result-placeholder').classList.remove('hidden');
+      document.getElementById('result-content').classList.add('hidden');
+      document.getElementById('loading-overlay').classList.add('hidden');
+    }
+
+    /* ── Prediction ── */
+    async function runPrediction() {
+      if (!selectedFile) return;
+
+      const btn = document.getElementById('btn-predict');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="btn-spinner"></span> Đang xử lý...`;
+
+      document.getElementById('result-placeholder').classList.add('hidden');
+      document.getElementById('result-content').classList.add('hidden');
+      document.getElementById('loading-overlay').classList.remove('hidden');
+
+      const fd = new FormData();
+      fd.append('file', selectedFile);
+
+      try {
+        const r    = await fetch('/api/predict-image', { method: 'POST', body: fd });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const data = await r.json();
+        showResults(data);
+      } catch (err) {
+        document.getElementById('loading-overlay').innerHTML =
+          `<div style="text-align:center;color:#ef4444;padding:24px">
+            ⚠ Lỗi: ${err.message}
+            <br/><button class="btn-select" style="margin-top:14px" onclick="resetResults()">Thử lại</button>
+          </div>`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg> Phân Loại Ngay`;
+        document.getElementById('loading-overlay').classList.add('hidden');
+      }
+    }
+
+    function showResults(data) {
+      document.getElementById('result-img').src = `data:image/jpeg;base64,${data.image_b64}`;
+
+      const countBadge = document.getElementById('result-count-badge');
+      if (data.count === 0) {
+        countBadge.textContent = '0 vật thể được phát hiện';
+        countBadge.className   = 'count-badge count-zero';
+      } else {
+        countBadge.textContent = `${data.count} vật thể phát hiện`;
+        countBadge.className   = 'count-badge count-some';
+      }
+
+      const list = document.getElementById('detection-list');
+      if (data.count === 0) {
+        list.innerHTML = `<div class="no-detection">
+          Không phát hiện vật thể rác nào vượt ngưỡng tin cậy (conf ≥ ${(0.35 * 100).toFixed(0)}%).
+        </div>`;
+      } else {
+        const colorMap = {
+          'BIODEGRADABLE': 'organic',
+          'CARDBOARD': 'recycle', 'GLASS': 'recycle',
+          'METAL': 'recycle', 'PAPER': 'recycle', 'PLASTIC': 'recycle',
+        };
+        list.innerHTML = data.detections.map((det, i) => `
+          <div class="det-card" style="--i:${i}">
+            <div class="det-header">
+              <span class="det-label-chip ${colorMap[det.label] || 'other'}">${det.label}</span>
+              <span class="det-conf-badge">${det.conf}%</span>
+            </div>
+            <div class="det-rows">
+              <div class="det-row"><span class="det-k">Nhóm</span><span class="det-v">${det.category}</span></div>
+              <div class="det-row"><span class="det-k">Thùng rác</span><span class="det-v">${det.bin}</span></div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      document.getElementById('result-content').classList.remove('hidden');
+    }
+
+    /* ── Drag & Drop ── */
+    function onDragOver(e) {
+      e.preventDefault();
+      document.getElementById('upload-area').classList.add('drag-over');
+    }
+    function onDragLeave() {
+      document.getElementById('upload-area').classList.remove('drag-over');
+    }
+    function onDrop(e) {
+      e.preventDefault();
+      document.getElementById('upload-area').classList.remove('drag-over');
+      const f = e.dataTransfer.files[0];
+      if (f && f.type.startsWith('image/')) loadFile(f);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       Init
+    ═══════════════════════════════════════════════════ */
+    window.addEventListener('load', () => startStream());
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && currentTab === 'webcam') {
+        stopStream();
+      } else if (!document.hidden && currentTab === 'webcam') {
+        startStream();
+      }
+    });
+  </script>
+</body>
+</html>
