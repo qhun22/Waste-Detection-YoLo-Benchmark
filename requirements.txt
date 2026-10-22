@@ -5,6 +5,7 @@ python-multipart
 jinja2
 roboflow
 opencv-python
+imageio-ffmpeg
 pillow
 matplotlib
 seaborn

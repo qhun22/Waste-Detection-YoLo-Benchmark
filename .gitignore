@@ -1,22 +1,31 @@
+# Dataset
 data/
 
+# Python
+.venv/
 venv/
 env/
-.venv/
 __pycache__/
 *.py[cod]
+*.pyo
 .ipynb_checkpoints/
 
+# Model weights & exports
 *.pt
 *.onnx
-runs/
-wandb/
+*.engine
 results/weights/
+runs/
 
+# Inference outputs
+results/predictions/
+app/static/videos/uploads/
+app/static/videos/outputs/
+
+# Misc
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
-
-# FastAPI server log
 server.log
+wandb/

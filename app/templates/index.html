@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hệ Thống Phân Loại Rác Thải Thông Minh</title>
+  <meta name="description" content="Hệ thống phân loại rác thải thông minh sử dụng mô hình YOLO." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Saira:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css?v=4" />
+</head>
+<body>
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <div class="app-wrapper">
+
+    <!-- ── Header ─────────────────────────────────────────────── -->
+    <header class="app-header">
+      <div class="brand">
+        <img class="brand-logo" src="/static/logo/sean.gif" alt="Logo hệ thống phân loại rác thải" />
+        <p class="brand-sub">Hệ Thống Phân Loại Rác Thải Thông Minh</p>
+      </div>
+      <div class="header-right">
+        <span class="badge badge-model">YOLO11n</span>
+        <span class="badge badge-cpu">CPU Optimized</span>
+        <div class="header-dot-sep"></div>
+        <span class="badge badge-uni">Học Máy · ICTU</span>
+      </div>
+    </header>
+
+    <!-- ── Tab Nav ─────────────────────────────────────────────── -->
+    <nav class="tab-nav" role="tablist">
+      <button id="tab-btn-webcam" class="tab-btn active" role="tab"
+              aria-selected="true" aria-controls="tab-webcam"
+              onclick="switchTab('webcam')">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 10l4.553-2.069A1 1 0 0121 8.882v6.235a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/>
+        </svg>
+        Webcam Trực Tiếp
+      </button>
+      <button id="tab-btn-image" class="tab-btn" role="tab"
+              aria-selected="false" aria-controls="tab-image"
+              onclick="switchTab('image')">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+          <path d="M21 15l-5-5L5 21"/>
+        </svg>
+        Nhận Diện Qua Ảnh
+      </button>
+      <button id="tab-btn-video" class="tab-btn" role="tab"
+              aria-selected="false" aria-controls="tab-video"
+              onclick="switchTab('video')">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="5" width="15" height="14" rx="2"/><path d="M17 10l5-3v10l-5-3"/>
+        </svg>
+        Nhận Diện Qua Video
+      </button>
+      <button id="tab-btn-stats" class="tab-btn" role="tab"
+              aria-selected="false" aria-controls="tab-stats"
+              onclick="switchTab('stats')">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 3v18h18M7 15l4-5 3 3 5-7"/>
+        </svg>
+        Thống Kê Mô Hình
+      </button>
+      <div class="tab-slider" id="tab-slider"></div>
+    </nav>
+
+    <!-- ── Main ────────────────────────────────────────────────── -->
+    <main class="app-main">
+
+      <!-- ── Tab 1: Webcam ─────────────────────────────────────── -->
+      <section id="tab-webcam" class="tab-content active" role="tabpanel">
+        <div class="webcam-layout">
+
+          <!-- Stream -->
+          <div class="stream-card">
+            <div class="stream-topbar">
+              <div class="live-pill">
+                <span class="live-dot" id="live-dot"></span>
+                <span>TRỰC TIẾP</span>
+              </div>
+              <div class="stream-stats" id="stream-stats">
+                <div class="stat-chip" id="fps-chip">
+                  <span class="stat-label">Khung hình/giây</span>
+                  <span class="stat-val" id="fps-val">—</span>
+                </div>
+                <div class="stat-chip" id="det-chip">
+                  <span class="stat-label">Phát hiện</span>
+                  <span class="stat-val" id="det-val">—</span>
+                </div>
+              </div>
+            </div>
+            <div class="stream-body">
+              <img id="cam-img" src="" alt="Webcam MJPEG Stream" class="stream-img" />
+              <div id="stream-overlay" class="stream-overlay">
+                <div class="stream-overlay-inner">
+                  <div class="spinner"></div>
+                  <p>Đang kết nối camera...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Side Panel -->
+          <aside class="webcam-sidebar">
+
+            <!-- Config -->
+            <div class="side-card">
+              <div class="side-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M20 12h-1M5 12H4M12 20v-1M12 5V4"/></svg>
+                Cấu Hình
+              </div>
+              <div class="conf-group">
+                <div class="conf-label-row">
+                  <span>Ngưỡng Tin Cậy</span>
+                  <span class="conf-badge" id="conf-badge">0.35</span>
+                </div>
+                <input type="range" id="conf-slider" class="slider"
+                       min="0.10" max="0.90" step="0.05" value="0.35"
+                       aria-label="Ngưỡng tin cậy"
+                       oninput="onConfChange(this.value)" />
+                <div class="slider-labels">
+                  <span>0.30</span><span>Chính xác cao</span><span>0.85</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="side-card">
+              <div class="side-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 20H5a2 2 0 01-2-2V6a2 2 0 012-2h4m6 16h4a2 2 0 002-2V6a2 2 0 00-2-2h-4M9 20V4m6 16V4"/></svg>
+                Hướng Dẫn Phân Loại
+              </div>
+              <div class="legend">
+                <div class="legend-item">
+                  <span class="legend-dot" style="background:#22c55e"></span>
+                  <div class="legend-body">
+                    <strong>BIODEGRADABLE</strong>
+                    <span>Rác hữu cơ / phân hủy sinh học</span>
+                  </div>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-dot" style="background:#a855f7"></span>
+                  <div class="legend-body">
+                    <strong>GLASS</strong>
+                    <span>Thủy tinh</span>
+                  </div>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-dot" style="background:#eab308"></span>
+                  <div class="legend-body">
+                    <strong>METAL</strong>
+                    <span>Kim loại</span>
+                  </div>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-dot" style="background:#f97316"></span>
+                  <div class="legend-body">
+                    <strong>PAPER</strong>
+                    <span>Giấy / Bìa carton</span>
+                  </div>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-dot" style="background:#ef4444"></span>
+                  <div class="legend-body">
+                    <strong>PLASTIC</strong>
+                    <span>Nhựa</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Model Info -->
+            <div class="side-card">
+              <div class="side-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+                Thông Tin Mô Hình
+              </div>
+              <div class="model-info-card">
+                <div class="info-cell"><span class="info-k">Mô hình</span><span class="info-v">YOLO11n</span></div>
+                <div class="info-cell"><span class="info-k">Số lớp</span><span class="info-v">5</span></div>
+                <div class="info-cell"><span class="info-k">Kích thước webcam</span><span class="info-v">640 × 640</span></div>
+                <div class="info-cell"><span class="info-k">Kích thước ảnh</span><span class="info-v">640 × 640</span></div>
+                <div class="info-cell"><span class="info-k">Thiết bị xử lý</span><span class="info-v">CPU</span></div>
+                <div class="info-cell"><span class="info-k">Ngưỡng tin cậy</span><span class="info-v">0.35</span></div>
+              </div>
+            </div>
+
+          </aside>
+        </div>
+      </section>
+
+      <!-- ── Tab 2: Image ──────────────────────────────────────── -->
+      <section id="tab-image" class="tab-content" role="tabpanel">
+        <div class="image-layout">
+
+          <!-- Upload Panel -->
+          <div class="upload-panel">
+            <div id="upload-area" class="upload-area"
+                 ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+              <div class="upload-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="56" height="56">
+                  <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 12V4m0 0l-3 3m3-3l3 3"/>
+                  <path d="M4 12.5V5a1 1 0 011-1h14a1 1 0 011 1v7.5" stroke-dasharray="3 3"/>
+                </svg>
+              </div>
+              <p class="upload-title">Kéo &amp; Thả Ảnh Vào Đây</p>
+              <p class="upload-sub">hoặc nhấn để chọn từ máy tính</p>
+              <button class="btn-select" onclick="document.getElementById('file-input').click()">
+                Chọn Tệp Ảnh
+              </button>
+              <p class="upload-hint">Hỗ trợ JPG · PNG · WEBP · BMP</p>
+              <input type="file" id="file-input" accept="image/*" hidden onchange="handleFileSelect(this)" />
+            </div>
+
+            <div id="preview-wrap" class="preview-wrap hidden">
+              <div class="preview-card">
+                <img id="preview-img" src="" alt="Preview ảnh đã chọn" class="preview-img" />
+                <button class="btn-reset" onclick="resetUpload()" aria-label="Chọn ảnh khác">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  Chọn Ảnh Khác
+                </button>
+              </div>
+              <button id="btn-predict" class="btn-predict" onclick="runPrediction()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                Phân Loại Ngay
+              </button>
+            </div>
+          </div>
+
+          <!-- Results Panel -->
+          <div class="results-panel" id="results-panel">
+            <div id="result-placeholder" class="result-placeholder">
+              <div class="placeholder-icon" aria-hidden="true">
+                <svg viewBox="0 0 64 64" fill="none" width="64" height="64">
+                  <circle cx="32" cy="32" r="30" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 4" opacity=".3"/>
+                  <path d="M32 20v12M32 36v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <p class="placeholder-text">Tải ảnh lên để bắt đầu phân tích</p>
+              <p class="placeholder-sub">Kết quả sẽ hiển thị tại đây</p>
+            </div>
+
+            <div id="result-content" class="result-content hidden">
+              <div class="result-img-wrap">
+                <img id="result-img" src="" alt="Ảnh kết quả phân loại" class="result-img" />
+              </div>
+            </div>
+
+            <div id="loading-overlay" class="loading-overlay hidden">
+              <div class="spinner large"></div>
+              <p>Đang phân tích ảnh...</p>
+              <p class="loading-sub">YOLO11n · imgsz=640</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Stats & detection cards — tách riêng khỏi khung ảnh kết quả -->
+        <div id="result-extra" class="result-extra hidden">
+
+          <div class="stats-card">
+            <div class="result-meta" id="result-meta">
+              <span id="result-count-badge"></span>
+            </div>
+
+            <div id="result-summary" class="result-summary hidden">
+              <div class="summary-kpis">
+                <div class="summary-kpi">
+                  <span class="summary-kpi-val" id="sum-total">0</span>
+                  <span class="summary-kpi-label">Tổng vật thể</span>
+                </div>
+                <div class="summary-kpi">
+                  <span class="summary-kpi-val" id="sum-classes">0</span>
+                  <span class="summary-kpi-label">Số loại rác</span>
+                </div>
+                <div class="summary-kpi">
+                  <span class="summary-kpi-val" id="sum-avg-conf">—</span>
+                  <span class="summary-kpi-label">Độ tin cậy TB</span>
+                </div>
+                <div class="summary-kpi">
+                  <span class="summary-kpi-val" id="sum-max-conf">—</span>
+                  <span class="summary-kpi-label">Tin cậy cao nhất</span>
+                </div>
+                <div class="summary-kpi">
+                  <span class="summary-kpi-val" id="sum-min-conf">—</span>
+                  <span class="summary-kpi-label">Tin cậy thấp nhất</span>
+                </div>
+                <div class="summary-kpi">
+                  <span class="summary-kpi-val is-text" id="sum-top-label">—</span>
+                  <span class="summary-kpi-label">Loại rác nhiều nhất</span>
+                </div>
+                <div class="summary-kpi">
+                  <span class="summary-kpi-val" id="sum-time">—</span>
+                  <span class="summary-kpi-label">Thời gian xử lý</span>
+                </div>
+                <div class="summary-kpi">
+                  <span class="summary-kpi-val" id="sum-img-size">—</span>
+                  <span class="summary-kpi-label">Kích thước ảnh</span>
+                </div>
+              </div>
+
+              <div class="summary-section-title">Tỷ Lệ Theo Loại Rác</div>
+              <div class="summary-breakdown" id="summary-breakdown"></div>
+            </div>
+
+            <div id="detection-list" class="detection-list"></div>
+          </div>
+
+          <div id="timing-card" class="timing-card hidden">
+            <div class="timing-card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              Chi Tiết Thời Gian Xử Lý
+            </div>
+            <div class="timing-breakdown" id="timing-breakdown"></div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ── Tab: Video ────────────────────────────────────────── -->
+      <section id="tab-video" class="tab-content" role="tabpanel">
+
+        <div id="video-upload-panel" class="image-layout">
+          <div class="upload-panel">
+            <div id="video-upload-area" class="upload-area"
+                 ondragover="onVideoDragOver(event)" ondragleave="onVideoDragLeave(event)" ondrop="onVideoDrop(event)">
+              <div class="upload-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="56" height="56">
+                  <rect x="2" y="5" width="15" height="14" rx="2"/><path d="M17 10l5-3v10l-5-3"/>
+                </svg>
+              </div>
+              <p class="upload-title">Kéo &amp; Thả Video Vào Đây</p>
+              <p class="upload-sub">hoặc nhấn để chọn từ máy tính</p>
+              <button class="btn-select" onclick="document.getElementById('video-file-input').click()">
+                Chọn Tệp Video
+              </button>
+              <p class="upload-hint">Hỗ trợ MP4 · MOV · AVI · MKV · WEBM · tối đa 100MB</p>
+              <input type="file" id="video-file-input" accept="video/*" hidden onchange="handleVideoFileSelect(this)" />
+            </div>
+          </div>
+
+          <div class="results-panel">
+            <div id="video-placeholder" class="result-placeholder">
+              <div class="placeholder-icon" aria-hidden="true">
+                <svg viewBox="0 0 64 64" fill="none" width="64" height="64">
+                  <circle cx="32" cy="32" r="30" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 4" opacity=".3"/>
+                  <path d="M32 20v12M32 36v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <p class="placeholder-text">Tải video lên để bắt đầu nhận diện</p>
+              <p class="placeholder-sub">Video gốc và video đã nhận diện sẽ phát song song</p>
+            </div>
+
+            <div id="video-progress-wrap" class="loading-overlay hidden">
+              <div class="spinner large"></div>
+              <p>Đang xử lý video...</p>
+              <p class="loading-sub" id="video-progress-text">0%</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="video-compare-wrap" class="video-compare-wrap hidden">
+          <div class="video-compare-grid">
+            <div class="video-compare-col">
+              <div class="video-compare-title">Video Gốc</div>
+              <video id="video-original" class="video-compare-player" controls playsinline></video>
+            </div>
+            <div class="video-compare-col">
+              <div class="video-compare-title">Video Nhận Diện</div>
+              <video id="video-annotated" class="video-compare-player" controls playsinline></video>
+            </div>
+          </div>
+          <button class="btn-select" onclick="resetVideoUpload()">Tải Video Khác</button>
+        </div>
+
+      </section>
+
+      <!-- ── Tab 3: Stats ──────────────────────────────────────── -->
+      <section id="tab-stats" class="tab-content" role="tabpanel">
+        <div class="stats-layout">
+
+          <!-- KPI Row -->
+          <div class="kpi-row" id="kpi-row">
+            <div class="kpi-card">
+              <span class="kpi-label">Precision</span>
+              <span class="kpi-val" id="kpi-precision">—</span>
+              <span class="kpi-sub">tại epoch tốt nhất</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-label">Recall</span>
+              <span class="kpi-val" id="kpi-recall">—</span>
+              <span class="kpi-sub">tại epoch tốt nhất</span>
+            </div>
+            <div class="kpi-card kpi-card-accent">
+              <span class="kpi-label">mAP@0.5</span>
+              <span class="kpi-val" id="kpi-map50">—</span>
+              <span class="kpi-sub">tại epoch tốt nhất</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-label">mAP@0.5:0.95</span>
+              <span class="kpi-val" id="kpi-map5095">—</span>
+              <span class="kpi-sub">tại epoch tốt nhất</span>
+            </div>
+          </div>
+
+          <div class="stats-grid">
+
+            <!-- Training info -->
+            <div class="side-card stats-info-card">
+              <div class="side-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+                Thông Tin Huấn Luyện
+              </div>
+              <div class="model-info-card" id="train-info-card">
+                <div class="info-cell"><span class="info-k">Mô hình</span><span class="info-v">YOLO11n</span></div>
+                <div class="info-cell"><span class="info-k">Bộ dữ liệu</span><span class="info-v" id="ti-dataset">—</span></div>
+                <div class="info-cell"><span class="info-k">Số vòng huấn luyện</span><span class="info-v" id="ti-epochs">—</span></div>
+                <div class="info-cell"><span class="info-k">Epoch tốt nhất</span><span class="info-v" id="ti-best-epoch">—</span></div>
+                <div class="info-cell"><span class="info-k">Số lớp</span><span class="info-v" id="ti-classes">—</span></div>
+                <div class="info-cell"><span class="info-k">Thiết bị huấn luyện</span><span class="info-v">RTX 3050</span></div>
+              </div>
+            </div>
+
+            <!-- Dataset split -->
+            <div class="side-card stats-info-card">
+              <div class="side-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 20H5a2 2 0 01-2-2V6a2 2 0 012-2h4m6 16h4a2 2 0 002-2V6a2 2 0 00-2-2h-4M9 20V4m6 16V4"/></svg>
+                Phân Chia Bộ Dữ Liệu
+              </div>
+              <div class="split-bars" id="split-bars">
+                <div class="split-row">
+                  <span class="split-name">Train</span>
+                  <div class="split-track"><div class="split-fill split-train" id="split-train-fill"></div></div>
+                  <span class="split-count" id="split-train-count">—</span>
+                </div>
+                <div class="split-row">
+                  <span class="split-name">Valid</span>
+                  <div class="split-track"><div class="split-fill split-valid" id="split-valid-fill"></div></div>
+                  <span class="split-count" id="split-valid-count">—</span>
+                </div>
+                <div class="split-row">
+                  <span class="split-name">Test</span>
+                  <div class="split-track"><div class="split-fill split-test" id="split-test-fill"></div></div>
+                  <span class="split-count" id="split-test-count">—</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Label distribution -->
+            <div class="side-card stats-info-card stats-span-2">
+              <div class="side-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M4 6h16M4 12h10M4 18h7"/></svg>
+                Phân Bố Nhãn Theo Lớp Rác Thải
+              </div>
+              <div class="label-bars" id="label-bars"></div>
+            </div>
+
+          </div>
+
+          <!-- Charts from real training artifacts -->
+          <div class="chart-grid">
+            <div class="chart-card">
+              <div class="chart-title">Đường Cong Huấn Luyện (Loss &amp; Metrics)</div>
+              <img class="chart-img" src="/api/training-artifact/results.png" alt="Training results curves" loading="lazy" />
+            </div>
+            <div class="chart-card">
+              <div class="chart-title">Ma Trận Nhầm Lẫn (Chuẩn Hóa)</div>
+              <img class="chart-img" src="/api/training-artifact/confusion_matrix_normalized.png" alt="Confusion matrix normalized" loading="lazy" />
+            </div>
+            <div class="chart-card">
+              <div class="chart-title">Đường Cong Precision–Recall</div>
+              <img class="chart-img" src="/api/training-artifact/BoxPR_curve.png" alt="Precision-Recall curve" loading="lazy" />
+            </div>
+            <div class="chart-card">
+              <div class="chart-title">Phân Bố Nhãn &amp; Kích Thước Bounding Box</div>
+              <img class="chart-img" src="/api/training-artifact/labels.jpg" alt="Label distribution" loading="lazy" />
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ── Footer ──────────────────────────────────────────────── -->
+    <footer class="app-footer">
+      <p>Học phần Học Máy · ICTU · Phân loại rác thải tự động bằng YOLO AI &nbsp;|&nbsp; CPU: Intel Vivobook X1505VA</p>
+    </footer>
+
+  </div><!-- /.app-wrapper -->
+
+  <script>
+    /* ═══════════════════════════════════════════════════
+       State
+    ═══════════════════════════════════════════════════ */
+    let currentTab    = 'webcam';
+    let statsInterval = null;
+    let selectedFile  = null;
+    let statsLoaded   = false;
+
+    /* ═══════════════════════════════════════════════════
+       Tab Switching
+    ═══════════════════════════════════════════════════ */
+    function switchTab(tab) {
+      if (tab === currentTab) return;
+      currentTab = tab;
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        const active = btn.id === `tab-btn-${tab}`;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-selected', String(active));
+      });
+      document.querySelectorAll('.tab-content').forEach(el => {
+        el.classList.toggle('active', el.id === `tab-${tab}`);
+      });
+
+      if (tab === 'webcam') startStream();
+      else                  stopStream();
+
+      if (tab === 'stats' && !statsLoaded) loadTrainingStats();
+    }
+
+    /* ═══════════════════════════════════════════════════
+       Webcam Stream
+    ═══════════════════════════════════════════════════ */
+    function startStream() {
+      const img     = document.getElementById('cam-img');
+      const overlay = document.getElementById('stream-overlay');
+      const liveDot = document.getElementById('live-dot');
+
+      overlay.style.display = 'flex';
+      liveDot.classList.remove('live-dot-active');
+
+      // Cache-buster để buộc browser mở kết nối mới
+      img.src = `/video_feed?t=${Date.now()}`;
+
+      img.onload = () => {
+        overlay.style.display = 'none';
+        liveDot.classList.add('live-dot-active');
+      };
+
+      img.onerror = () => {
+        overlay.innerHTML = `<div class="stream-overlay-inner">
+          <p style="color:#ef4444;">⚠ Không thể kết nối camera.<br/>Kiểm tra webcam và khởi động lại server.</p>
+        </div>`;
+      };
+
+      statsInterval = setInterval(fetchStats, 1200);
+    }
+
+    function stopStream() {
+      const img = document.getElementById('cam-img');
+      img.src = '';
+      document.getElementById('live-dot').classList.remove('live-dot-active');
+      if (statsInterval) { clearInterval(statsInterval); statsInterval = null; }
+      document.getElementById('fps-val').textContent = '—';
+      document.getElementById('det-val').textContent = '—';
+    }
+
+    async function fetchStats() {
+      try {
+        const r    = await fetch('/api/cam-stats');
+        const data = await r.json();
+        document.getElementById('fps-val').textContent = data.fps;
+        document.getElementById('det-val').textContent = data.detections;
+      } catch (_) {}
+    }
+
+    /* ── Confidence Slider ── */
+    let confDebounce = null;
+    function onConfChange(val) {
+      document.getElementById('conf-badge').textContent = parseFloat(val).toFixed(2);
+      clearTimeout(confDebounce);
+      confDebounce = setTimeout(async () => {
+        try { await fetch(`/api/set-conf?conf=${val}`, { method: 'POST' }); } catch (_) {}
+      }, 300);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       Image Upload
+    ═══════════════════════════════════════════════════ */
+    function handleFileSelect(input) {
+      const f = input.files[0];
+      if (f) loadFile(f);
+    }
+
+    function loadFile(file) {
+      selectedFile = file;
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById('preview-img').src = e.target.result;
+        document.getElementById('upload-area').classList.add('hidden');
+        document.getElementById('preview-wrap').classList.remove('hidden');
+        resetResults();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function resetUpload() {
+      selectedFile = null;
+      document.getElementById('file-input').value = '';
+      document.getElementById('upload-area').classList.remove('hidden');
+      document.getElementById('preview-wrap').classList.add('hidden');
+      resetResults();
+    }
+
+    function resetResults() {
+      document.getElementById('result-placeholder').classList.remove('hidden');
+      document.getElementById('result-content').classList.add('hidden');
+      document.getElementById('loading-overlay').classList.add('hidden');
+      document.getElementById('result-extra').classList.add('hidden');
+      document.getElementById('timing-card').classList.add('hidden');
+    }
+
+    /* ── Prediction ── */
+    async function runPrediction() {
+      if (!selectedFile) return;
+
+      const btn = document.getElementById('btn-predict');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="btn-spinner"></span> Đang xử lý...`;
+
+      document.getElementById('result-placeholder').classList.add('hidden');
+      document.getElementById('result-content').classList.add('hidden');
+      document.getElementById('result-extra').classList.add('hidden');
+      document.getElementById('loading-overlay').classList.remove('hidden');
+
+      const fd = new FormData();
+      fd.append('file', selectedFile);
+
+      try {
+        const r    = await fetch('/api/predict-image', { method: 'POST', body: fd });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const data = await r.json();
+        showResults(data);
+      } catch (err) {
+        document.getElementById('loading-overlay').innerHTML =
+          `<div style="text-align:center;color:#ef4444;padding:24px">
+            ⚠ Lỗi: ${err.message}
+            <br/><button class="btn-select" style="margin-top:14px" onclick="resetResults()">Thử lại</button>
+          </div>`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg> Phân Loại Ngay`;
+        document.getElementById('loading-overlay').classList.add('hidden');
+      }
+    }
+
+    const LABEL_CSS_CLASS = {
+      'BIODEGRADABLE': 'bio',
+      'GLASS':         'glas',
+      'METAL':         'meta',
+      'PAPER':         'pape',
+      'PLASTIC':       'plas',
+    };
+
+    function showResults(data) {
+      document.getElementById('result-img').src = `data:image/jpeg;base64,${data.image_b64}`;
+      document.getElementById('result-extra').classList.remove('hidden');
+
+      const countBadge = document.getElementById('result-count-badge');
+      const summaryBox = document.getElementById('result-summary');
+      const timingCard = document.getElementById('timing-card');
+
+      if (data.count === 0) {
+        countBadge.textContent = '0 vật thể được phát hiện';
+        countBadge.className   = 'count-badge count-zero';
+        summaryBox.classList.add('hidden');
+      } else {
+        countBadge.textContent = `${data.count} vật thể phát hiện`;
+        countBadge.className   = 'count-badge count-some';
+        renderResultSummary(data);
+        summaryBox.classList.remove('hidden');
+      }
+
+      if (data.timing_ms) {
+        renderTimingCard(data.timing_ms);
+        timingCard.classList.remove('hidden');
+      } else {
+        timingCard.classList.add('hidden');
+      }
+
+      const list = document.getElementById('detection-list');
+      if (data.count === 0) {
+        list.innerHTML = `<div class="no-detection">
+          Không phát hiện vật thể rác nào vượt ngưỡng tin cậy (độ tin cậy ≥ ${(IMG_CONF_THRESHOLD * 100).toFixed(0)}%).
+        </div>`;
+      } else {
+        list.innerHTML = data.detections.map((det, i) => `
+          <div class="det-card" style="--i:${i}">
+            <div class="det-card-main">
+              <span class="det-label-chip ${LABEL_CSS_CLASS[det.label] || 'other'}">${det.label}</span>
+              <span class="det-conf-badge">${det.conf}%</span>
+            </div>
+            <div class="det-card-sub">
+              <span>Vị trí: [${det.box[0]}, ${det.box[1]}] → [${det.box[2]}, ${det.box[3]}]</span>
+              <span>Diện tích: ${det.area_ratio}% khung hình</span>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      document.getElementById('result-content').classList.remove('hidden');
+    }
+
+    const IMG_CONF_THRESHOLD = 0.40; // khớp IMG_CONF trong app/server.py
+
+    function renderResultSummary(data) {
+      const detections = data.detections;
+      const confs    = detections.map(d => d.conf);
+      const avgConf  = confs.reduce((a, b) => a + b, 0) / confs.length;
+      const maxConf  = Math.max(...confs);
+      const minConf  = Math.min(...confs);
+
+      const byClass = {};
+      detections.forEach(d => { byClass[d.label] = (byClass[d.label] || 0) + 1; });
+      const classEntries = Object.entries(byClass).sort((a, b) => b[1] - a[1]);
+      const topLabel = classEntries[0][0];
+
+      document.getElementById('sum-total').textContent     = detections.length;
+      document.getElementById('sum-classes').textContent   = classEntries.length;
+      document.getElementById('sum-avg-conf').textContent  = `${avgConf.toFixed(1)}%`;
+      document.getElementById('sum-max-conf').textContent  = `${maxConf.toFixed(1)}%`;
+      document.getElementById('sum-min-conf').textContent  = `${minConf.toFixed(1)}%`;
+      document.getElementById('sum-top-label').textContent = topLabel;
+      document.getElementById('sum-time').textContent      = data.timing_ms ? `${data.timing_ms.total} ms` : '—';
+      document.getElementById('sum-img-size').textContent  = data.image_size ? `${data.image_size.width}×${data.image_size.height}` : '—';
+
+      const breakdown = document.getElementById('summary-breakdown');
+      breakdown.innerHTML = classEntries.map(([label, count]) => `
+        <div class="breakdown-row">
+          <span class="det-label-chip ${LABEL_CSS_CLASS[label] || 'other'}">${label}</span>
+          <div class="breakdown-track">
+            <div class="breakdown-fill" style="width:${(count / detections.length * 100).toFixed(1)}%"></div>
+          </div>
+          <span class="breakdown-count">${count} (${(count / detections.length * 100).toFixed(0)}%)</span>
+        </div>
+      `).join('');
+
+    }
+
+    function renderTimingCard(t) {
+      const timingBox = document.getElementById('timing-breakdown');
+      timingBox.innerHTML = `
+        <div class="timing-row"><span>Tiền xử lý ảnh</span><span>${t.preprocess} ms</span></div>
+        <div class="timing-row"><span>Suy luận mô hình</span><span>${t.inference} ms</span></div>
+        <div class="timing-row"><span>Hậu xử lý kết quả</span><span>${t.postprocess} ms</span></div>
+        <div class="timing-row timing-row-total"><span>Tổng thời gian</span><span>${t.total} ms</span></div>
+      `;
+    }
+
+    /* ── Drag & Drop ── */
+    function onDragOver(e) {
+      e.preventDefault();
+      document.getElementById('upload-area').classList.add('drag-over');
+    }
+    function onDragLeave() {
+      document.getElementById('upload-area').classList.remove('drag-over');
+    }
+    function onDrop(e) {
+      e.preventDefault();
+      document.getElementById('upload-area').classList.remove('drag-over');
+      const f = e.dataTransfer.files[0];
+      if (f && f.type.startsWith('image/')) loadFile(f);
+    }
+
+    /* ═══════════════════════════════════════════════════
+       Video Upload & Nhận Diện
+    ═══════════════════════════════════════════════════ */
+    let videoPollTimer = null;
+
+    function handleVideoFileSelect(input) {
+      const f = input.files[0];
+      if (f) uploadVideo(f);
+    }
+
+    function onVideoDragOver(e) {
+      e.preventDefault();
+      document.getElementById('video-upload-area').classList.add('drag-over');
+    }
+    function onVideoDragLeave() {
+      document.getElementById('video-upload-area').classList.remove('drag-over');
+    }
+    function onVideoDrop(e) {
+      e.preventDefault();
+      document.getElementById('video-upload-area').classList.remove('drag-over');
+      const f = e.dataTransfer.files[0];
+      if (f && f.type.startsWith('video/')) uploadVideo(f);
+    }
+
+    async function uploadVideo(file) {
+      document.getElementById('video-placeholder').classList.add('hidden');
+      document.getElementById('video-compare-wrap').classList.add('hidden');
+      document.getElementById('video-progress-wrap').classList.remove('hidden');
+      document.getElementById('video-progress-text').textContent = 'Đang tải lên...';
+
+      const fd = new FormData();
+      fd.append('file', file);
+
+      try {
+        const r = await fetch('/api/upload-video', { method: 'POST', body: fd });
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          throw new Error(err.detail || `HTTP ${r.status}`);
+        }
+        const data = await r.json();
+        pollVideoStatus(data.job_id);
+      } catch (err) {
+        videoUploadError(err.message);
+      }
+    }
+
+    function pollVideoStatus(jobId) {
+      if (videoPollTimer) clearInterval(videoPollTimer);
+      videoPollTimer = setInterval(async () => {
+        try {
+          const r = await fetch(`/api/video-status/${jobId}`);
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          const job = await r.json();
+
+          if (job.status === 'processing') {
+            document.getElementById('video-progress-text').textContent = `${job.progress.toFixed(0)}%`;
+          } else if (job.status === 'done') {
+            clearInterval(videoPollTimer);
+            videoPollTimer = null;
+            showVideoResult(job);
+          } else if (job.status === 'error') {
+            clearInterval(videoPollTimer);
+            videoPollTimer = null;
+            videoUploadError(job.error || 'Xử lý video thất bại.');
+          }
+        } catch (err) {
+          clearInterval(videoPollTimer);
+          videoPollTimer = null;
+          videoUploadError(err.message);
+        }
+      }, 1000);
+    }
+
+    function showVideoResult(job) {
+      document.getElementById('video-progress-wrap').classList.add('hidden');
+      document.getElementById('video-upload-panel').classList.add('hidden');
+      document.getElementById('video-compare-wrap').classList.remove('hidden');
+
+      const original  = document.getElementById('video-original');
+      const annotated = document.getElementById('video-annotated');
+      original.src  = `${job.original_url}?t=${Date.now()}`;
+      annotated.src = `${job.result_url}?t=${Date.now()}`;
+
+      syncVideoPair(original, annotated);
+      original.play().catch(() => {});
+      annotated.play().catch(() => {});
+    }
+
+    function syncVideoPair(a, b) {
+      let syncing = false;
+      const sync = (src, dst) => {
+        if (syncing) return;
+        syncing = true;
+        if (Math.abs(src.currentTime - dst.currentTime) > 0.25) dst.currentTime = src.currentTime;
+        syncing = false;
+      };
+      a.addEventListener('play',  () => b.play().catch(() => {}));
+      a.addEventListener('pause', () => b.pause());
+      a.addEventListener('seeked', () => sync(a, b));
+      b.addEventListener('play',  () => a.play().catch(() => {}));
+      b.addEventListener('pause', () => a.pause());
+      b.addEventListener('seeked', () => sync(b, a));
+      a.addEventListener('timeupdate', () => sync(a, b));
+    }
+
+    function videoUploadError(msg) {
+      document.getElementById('video-progress-wrap').classList.add('hidden');
+      document.getElementById('video-placeholder').classList.remove('hidden');
+      document.getElementById('video-placeholder').innerHTML = `
+        <p style="color:#ef4444; text-align:center;">⚠ ${msg}</p>
+        <p class="placeholder-sub">Vui lòng thử lại với video khác</p>
+      `;
+    }
+
+    function resetVideoUpload() {
+      if (videoPollTimer) { clearInterval(videoPollTimer); videoPollTimer = null; }
+      document.getElementById('video-file-input').value = '';
+      document.getElementById('video-original').src = '';
+      document.getElementById('video-annotated').src = '';
+      document.getElementById('video-compare-wrap').classList.add('hidden');
+      document.getElementById('video-upload-panel').classList.remove('hidden');
+      document.getElementById('video-placeholder').classList.remove('hidden');
+      document.getElementById('video-placeholder').innerHTML = `
+        <div class="placeholder-icon" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none" width="64" height="64">
+            <circle cx="32" cy="32" r="30" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 4" opacity=".3"/>
+            <path d="M32 20v12M32 36v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <p class="placeholder-text">Tải video lên để bắt đầu nhận diện</p>
+        <p class="placeholder-sub">Video gốc và video đã nhận diện sẽ phát song song</p>
+      `;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       Stats Tab (số liệu huấn luyện thật)
+    ═══════════════════════════════════════════════════ */
+    const LABEL_COLOR = {
+      BIODEGRADABLE: '#22c55e',
+      GLASS:         '#a855f7',
+      METAL:         '#eab308',
+      PAPER:         '#f97316',
+      PLASTIC:       '#ef4444',
+    };
+
+    async function loadTrainingStats() {
+      try {
+        const r = await fetch('/api/training-stats');
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const data = await r.json();
+        renderTrainingStats(data);
+        statsLoaded = true;
+      } catch (err) {
+        console.error('Không thể tải số liệu huấn luyện:', err);
+      }
+    }
+
+    function pct(v) { return v == null ? '—' : `${(v * 100).toFixed(1)}%`; }
+
+    function renderTrainingStats(data) {
+      const best = data.best_epoch;
+
+      document.getElementById('kpi-precision').textContent = pct(best.precision);
+      document.getElementById('kpi-recall').textContent    = pct(best.recall);
+      document.getElementById('kpi-map50').textContent     = pct(best.map50);
+      document.getElementById('kpi-map5095').textContent   = pct(best.map50_95);
+
+      document.getElementById('ti-dataset').textContent    = data.dataset;
+      document.getElementById('ti-epochs').textContent     = data.total_epochs;
+      document.getElementById('ti-best-epoch').textContent = `${best.epoch} / ${data.total_epochs}`;
+      document.getElementById('ti-classes').textContent    = data.num_classes;
+
+      const counts = data.dataset_counts;
+      const totalImgs = counts.train + counts.valid + counts.test;
+      document.getElementById('split-train-fill').style.width = `${(counts.train / totalImgs * 100).toFixed(1)}%`;
+      document.getElementById('split-valid-fill').style.width = `${(counts.valid / totalImgs * 100).toFixed(1)}%`;
+      document.getElementById('split-test-fill').style.width  = `${(counts.test  / totalImgs * 100).toFixed(1)}%`;
+      document.getElementById('split-train-count').textContent = counts.train.toLocaleString('vi-VN');
+      document.getElementById('split-valid-count').textContent = counts.valid.toLocaleString('vi-VN');
+      document.getElementById('split-test-count').textContent  = counts.test.toLocaleString('vi-VN');
+
+      const labelEntries = Object.entries(data.label_counts).sort((a, b) => b[1] - a[1]);
+      const maxCount = labelEntries[0][1];
+      const labelBars = document.getElementById('label-bars');
+      labelBars.innerHTML = labelEntries.map(([label, count]) => `
+        <div class="label-bar-row">
+          <span class="label-bar-name">${label}</span>
+          <div class="label-bar-track">
+            <div class="label-bar-fill" style="width:${(count / maxCount * 100).toFixed(1)}%; background:${LABEL_COLOR[label] || '#64748b'}"></div>
+          </div>
+          <span class="label-bar-count">${count.toLocaleString('vi-VN')}</span>
+        </div>
+      `).join('');
+    }
+
+    /* ═══════════════════════════════════════════════════
+       Init
+    ═══════════════════════════════════════════════════ */
+    window.addEventListener('load', () => startStream());
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && currentTab === 'webcam') {
+        stopStream();
+      } else if (!document.hidden && currentTab === 'webcam') {
+        startStream();
+      }
+    });
+  </script>
+</body>
+</html>
