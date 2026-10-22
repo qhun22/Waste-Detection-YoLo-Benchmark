@@ -50,11 +50,14 @@ CAM_MAX_DET   = 5
 CAM_BOX_RATIO = 0.60   # Loại box chiếm > 60% diện tích frame
 
 IMG_IMGSZ = 640
-IMG_CONF  = 0.40
+IMG_CONF  = 0.25
+IMG_IOU   = 0.50
 
 VIDEO_IMGSZ       = 640
-VIDEO_CONF        = 0.40
+VIDEO_CONF        = 0.25
+VIDEO_IOU         = 0.50
 VIDEO_MAX_DET     = 20
+VIDEO_BOX_RATIO   = 0.97   # vật chụp cận cảnh, gần kín khung hình, vẫn là detection hợp lệ
 VIDEO_UPLOAD_DIR  = os.path.join(BASE_DIR, "static", "videos", "uploads")
 VIDEO_OUTPUT_DIR  = os.path.join(BASE_DIR, "static", "videos", "outputs")
 VIDEO_MAX_BYTES   = 100 * 1024 * 1024   # 100 MB
@@ -98,11 +101,16 @@ print("[EcoVision] Model ready.")
 # ─────────────────────────────────────────────────────────────────────
 #  Helper: Lọc bounding box bất thường
 # ─────────────────────────────────────────────────────────────────────
-def _filter_boxes(result, frame_area: int) -> None:
+def _filter_boxes(result, frame_area: int, box_ratio: float = CAM_BOX_RATIO) -> None:
     """
     Lọc in-place:
-      1. Box diện tích > CAM_BOX_RATIO → background / toàn thân người
+      1. Box diện tích > box_ratio → background / toàn thân người
       2. Aspect ratio cực đoan → tay/chân người dọc theo cạnh frame
+
+    box_ratio mặc định (CAM_BOX_RATIO) chỉ hợp lý cho webcam, nơi khung hình
+    luôn có nền + người đứng cầm vật. Với video upload, một vật thể chụp cận
+    cảnh chiếm gần hết khung hình là chuyện bình thường — dùng ngưỡng cao hơn
+    (VIDEO_BOX_RATIO) để không loại nhầm detection đúng.
     """
     if result.boxes is None or len(result.boxes) == 0:
         return
@@ -112,7 +120,7 @@ def _filter_boxes(result, frame_area: int) -> None:
     areas  = w * h
     aspect = w / (h + 1e-6)
     keep   = (
-        (areas / frame_area <= CAM_BOX_RATIO) &
+        (areas / frame_area <= box_ratio) &
         (aspect >= 0.12) &
         (aspect <= 7.0)
     )
@@ -455,6 +463,7 @@ async def predict_image(file: UploadFile = File(...)):
     res = model_img.predict(
         source=pil_img,   # PIL RGB → Ultralytics tự chuyển nội bộ
         conf=IMG_CONF,
+        iou=IMG_IOU,
         imgsz=IMG_IMGSZ,
         max_det=300,
         verbose=False,
@@ -565,11 +574,11 @@ def _process_video_job(job_id: str, input_path: str, playable_path: str, output_
             frame_idx += 1
 
             result = model_video.predict(
-                source=frame, conf=VIDEO_CONF, imgsz=VIDEO_IMGSZ,
+                source=frame, conf=VIDEO_CONF, iou=VIDEO_IOU, imgsz=VIDEO_IMGSZ,
                 max_det=VIDEO_MAX_DET, agnostic_nms=True, verbose=False,
             )[0]
             frame_area = width * height
-            _filter_boxes(result, frame_area)
+            _filter_boxes(result, frame_area, box_ratio=VIDEO_BOX_RATIO)
 
             annotated = frame
             if result.boxes is not None and len(result.boxes) > 0:
