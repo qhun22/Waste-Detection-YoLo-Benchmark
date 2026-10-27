@@ -25,16 +25,16 @@
 
     <!-- ── Tab Nav ─────────────────────────────────────────────── -->
     <nav class="tab-nav" role="tablist">
-      <button id="tab-btn-webcam" class="tab-btn active" role="tab"
-              aria-selected="true" aria-controls="tab-webcam"
+      <button id="tab-btn-webcam" class="tab-btn" role="tab" style="display:none"
+              aria-selected="false" aria-controls="tab-webcam"
               onclick="switchTab('webcam')">
         <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M15 10l4.553-2.069A1 1 0 0121 8.882v6.235a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/>
         </svg>
         Webcam Trực Tiếp
       </button>
-      <button id="tab-btn-image" class="tab-btn" role="tab"
-              aria-selected="false" aria-controls="tab-image"
+      <button id="tab-btn-image" class="tab-btn active" role="tab"
+              aria-selected="true" aria-controls="tab-image"
               onclick="switchTab('image')">
         <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
@@ -42,7 +42,7 @@
         </svg>
         Nhận Diện Qua Ảnh
       </button>
-      <button id="tab-btn-video" class="tab-btn" role="tab"
+      <button id="tab-btn-video" class="tab-btn" role="tab" style="display:none"
               aria-selected="false" aria-controls="tab-video"
               onclick="switchTab('video')">
         <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -65,7 +65,7 @@
     <main class="app-main">
 
       <!-- ── Tab 1: Webcam ─────────────────────────────────────── -->
-      <section id="tab-webcam" class="tab-content active" role="tabpanel">
+      <section id="tab-webcam" class="tab-content" role="tabpanel" style="display:none">
         <div class="webcam-layout">
 
           <!-- Stream -->
@@ -200,7 +200,7 @@
       </section>
 
       <!-- ── Tab 2: Image ──────────────────────────────────────── -->
-      <section id="tab-image" class="tab-content" role="tabpanel">
+      <section id="tab-image" class="tab-content active" role="tabpanel">
         <div class="image-layout image-recognition-layout">
 
           <!-- Card 1: ẢNH ĐẦU VÀO -->

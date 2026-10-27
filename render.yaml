@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: waste-detection-yolo
+    runtime: python
+    buildCommand: pip install -r requirements-torch.txt && pip install -r requirements-production.txt
+    startCommand: uvicorn app.server:app --host 0.0.0.0 --port $PORT --workers 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9

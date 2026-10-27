@@ -12,6 +12,7 @@ __pycache__/
 
 # Model weights & exports
 *.pt
+!results/figures/PhanLoaiRac_5Class_v2/weights/best.pt
 *.onnx
 *.engine
 results/weights/
