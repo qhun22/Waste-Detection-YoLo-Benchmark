@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Saira:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/style.css?v=4" />
+  <link rel="stylesheet" href="/static/style.css?v=15" />
 </head>
 <body>
   <div class="bg-glow bg-glow-1"></div>
@@ -19,14 +19,7 @@
     <!-- ── Header ─────────────────────────────────────────────── -->
     <header class="app-header">
       <div class="brand">
-        <img class="brand-logo" src="/static/logo/sean.gif" alt="Logo hệ thống phân loại rác thải" />
         <p class="brand-sub">Hệ Thống Phân Loại Rác Thải Thông Minh</p>
-      </div>
-      <div class="header-right">
-        <span class="badge badge-model">YOLO11n</span>
-        <span class="badge badge-cpu">CPU Optimized</span>
-        <div class="header-dot-sep"></div>
-        <span class="badge badge-uni">Học Máy · ICTU</span>
       </div>
     </header>
 
@@ -82,23 +75,38 @@
                 <span class="live-dot" id="live-dot"></span>
                 <span>TRỰC TIẾP</span>
               </div>
-              <div class="stream-stats" id="stream-stats">
-                <div class="stat-chip" id="fps-chip">
-                  <span class="stat-label">Khung hình/giây</span>
-                  <span class="stat-val" id="fps-val">—</span>
+              <div class="stream-controls">
+                <div class="stream-stats" id="stream-stats">
+                  <div class="stat-chip" id="fps-chip">
+                    <span class="stat-label">Khung hình/giây</span>
+                    <span class="stat-val" id="fps-val">—</span>
+                  </div>
+                  <div class="stat-chip" id="det-chip">
+                    <span class="stat-label">Phát hiện</span>
+                    <span class="stat-val" id="det-val">—</span>
+                  </div>
                 </div>
-                <div class="stat-chip" id="det-chip">
-                  <span class="stat-label">Phát hiện</span>
-                  <span class="stat-val" id="det-val">—</span>
-                </div>
+                <button id="camera-toggle" class="camera-toggle" type="button"
+                        aria-pressed="false" onclick="toggleCameraVisibility()">
+                  <span class="camera-toggle-icon" aria-hidden="true">◉</span>
+                  <span id="camera-toggle-label">Hiện camera</span>
+                </button>
               </div>
             </div>
             <div class="stream-body">
-              <img id="cam-img" src="" alt="Webcam MJPEG Stream" class="stream-img" />
-              <div id="stream-overlay" class="stream-overlay">
-                <div class="stream-overlay-inner">
-                  <div class="spinner"></div>
-                  <p>Đang kết nối camera...</p>
+              <img id="cam-img" alt="" class="stream-img" />
+              <div id="stream-overlay" class="stream-overlay stream-overlay-off">
+                <div class="stream-overlay-inner camera-state camera-state-off" role="status" aria-live="polite">
+                  <div class="camera-state-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
+                      <circle cx="12" cy="12" r="6.25" stroke="currentColor" stroke-width="1.7"/>
+                      <circle cx="12" cy="12" r="3.6" fill="currentColor"/>
+                    </svg>
+                  </div>
+                  <div class="camera-state-copy">
+                    <p class="camera-state-title">Camera đang tắt</p>
+                    <p class="camera-state-detail">Nhấn “Hiện camera” để bật lại.</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -132,7 +140,7 @@
             <div class="side-card">
               <div class="side-card-title">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 20H5a2 2 0 01-2-2V6a2 2 0 012-2h4m6 16h4a2 2 0 002-2V6a2 2 0 00-2-2h-4M9 20V4m6 16V4"/></svg>
-                Hướng Dẫn Phân Loại
+                Class phân loại
               </div>
               <div class="legend">
                 <div class="legend-item">
@@ -181,10 +189,8 @@
               </div>
               <div class="model-info-card">
                 <div class="info-cell"><span class="info-k">Mô hình</span><span class="info-v">YOLO11n</span></div>
-                <div class="info-cell"><span class="info-k">Số lớp</span><span class="info-v">5</span></div>
                 <div class="info-cell"><span class="info-k">Kích thước webcam</span><span class="info-v">640 × 640</span></div>
                 <div class="info-cell"><span class="info-k">Kích thước ảnh</span><span class="info-v">640 × 640</span></div>
-                <div class="info-cell"><span class="info-k">Thiết bị xử lý</span><span class="info-v">CPU</span></div>
                 <div class="info-cell"><span class="info-k">Ngưỡng tin cậy</span><span class="info-v">0.35</span></div>
               </div>
             </div>
@@ -195,186 +201,400 @@
 
       <!-- ── Tab 2: Image ──────────────────────────────────────── -->
       <section id="tab-image" class="tab-content" role="tabpanel">
-        <div class="image-layout">
+        <div class="image-layout image-recognition-layout">
 
-          <!-- Upload Panel -->
-          <div class="upload-panel">
-            <div id="upload-area" class="upload-area"
-                 ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
-              <div class="upload-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="56" height="56">
-                  <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 12V4m0 0l-3 3m3-3l3 3"/>
-                  <path d="M4 12.5V5a1 1 0 011-1h14a1 1 0 011 1v7.5" stroke-dasharray="3 3"/>
+          <!-- Card 1: ẢNH ĐẦU VÀO -->
+          <div class="stream-card image-card">
+            <div class="stream-topbar">
+              <div class="card-pill">
+                <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
                 </svg>
+                <span>ẢNH ĐẦU VÀO</span>
               </div>
-              <p class="upload-title">Kéo &amp; Thả Ảnh Vào Đây</p>
-              <p class="upload-sub">hoặc nhấn để chọn từ máy tính</p>
-              <button class="btn-select" onclick="document.getElementById('file-input').click()">
-                Chọn Tệp Ảnh
-              </button>
-              <p class="upload-hint">Hỗ trợ JPG · PNG · WEBP · BMP</p>
-              <input type="file" id="file-input" accept="image/*" hidden onchange="handleFileSelect(this)" />
-            </div>
-
-            <div id="preview-wrap" class="preview-wrap hidden">
-              <div class="preview-card">
-                <img id="preview-img" src="" alt="Preview ảnh đã chọn" class="preview-img" />
-                <button class="btn-reset" onclick="resetUpload()" aria-label="Chọn ảnh khác">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                  Chọn Ảnh Khác
+              <div class="stream-controls">
+                <div class="stat-chip">
+                  <span class="stat-label">Trạng thái</span>
+                  <span class="stat-val" id="upload-status-val">Chưa chọn ảnh</span>
+                </div>
+                <button id="btn-reupload" class="camera-toggle hidden" type="button" onclick="document.getElementById('file-input').click()">
+                  <span class="camera-toggle-icon" aria-hidden="true">↺</span>
+                  <span>Đổi ảnh</span>
                 </button>
               </div>
-              <button id="btn-predict" class="btn-predict" onclick="runPrediction()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                Phân Loại Ngay
-              </button>
+            </div>
+
+            <div class="stream-body image-card-body">
+              <!-- Upload Area (centered) -->
+              <div id="upload-area" class="upload-dropzone"
+                   ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)"
+                   onclick="document.getElementById('file-input').click()">
+                <div class="upload-dropzone-inner">
+                  <div class="upload-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="52" height="52">
+                      <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 12V4m0 0l-3 3m3-3l3 3"/>
+                      <path d="M4 12.5V5a1 1 0 011-1h14a1 1 0 011 1v7.5" stroke-dasharray="3 3"/>
+                    </svg>
+                  </div>
+                  <h3 class="upload-title">Kéo &amp; Thả Ảnh Vào Đây</h3>
+                  <p class="upload-sub">hoặc nhấn để duyệt tệp từ thiết bị</p>
+                  <button class="btn-select" type="button" onclick="event.stopPropagation(); document.getElementById('file-input').click()">
+                    Chọn Tệp Ảnh
+                  </button>
+                  <p class="upload-hint">Hỗ trợ JPG · PNG · WEBP · BMP</p>
+                </div>
+                <input type="file" id="file-input" accept="image/*" hidden onchange="handleFileSelect(this)" />
+              </div>
+
+              <!-- Preview Wrap (when image selected) -->
+              <div id="preview-wrap" class="preview-wrap hidden">
+                <div class="preview-card-inner">
+                  <img id="preview-img" src="" alt="Preview ảnh đã chọn" class="stream-img" />
+                </div>
+                <div class="image-action-bar">
+                  <button class="btn-clean-action btn-cancel" type="button" onclick="resetUpload()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    Hủy chọn
+                  </button>
+                  <button id="btn-predict" class="btn-clean-action btn-predict-clean" type="button" onclick="runPrediction()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                    Phân Loại Ngay
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Results Panel -->
-          <div class="results-panel" id="results-panel">
-            <div id="result-placeholder" class="result-placeholder">
-              <div class="placeholder-icon" aria-hidden="true">
-                <svg viewBox="0 0 64 64" fill="none" width="64" height="64">
-                  <circle cx="32" cy="32" r="30" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 4" opacity=".3"/>
-                  <path d="M32 20v12M32 36v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <!-- Card 2: KẾT QUẢ NHẬN DIỆN -->
+          <div class="stream-card image-card" id="results-panel">
+            <div class="stream-topbar">
+              <div class="card-pill">
+                <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
                 </svg>
+                <span>KẾT QUẢ NHẬN DIỆN</span>
               </div>
-              <p class="placeholder-text">Tải ảnh lên để bắt đầu phân tích</p>
-              <p class="placeholder-sub">Kết quả sẽ hiển thị tại đây</p>
+              <div class="stream-controls">
+                <div class="stat-chip">
+                  <span class="stat-label">Xác nhận</span>
+                  <span class="stat-val" id="img-det-val">—</span>
+                </div>
+                <div class="stat-chip">
+                  <span class="stat-label">Thời gian</span>
+                  <span class="stat-val" id="img-time-val">—</span>
+                </div>
+                <a id="result-download" class="camera-toggle hidden" href="#" download="ket-qua-phan-loai.jpg">
+                  <span class="camera-toggle-icon" aria-hidden="true">⬇</span>
+                  <span>Tải ảnh</span>
+                </a>
+              </div>
             </div>
 
-            <div id="result-content" class="result-content hidden">
-              <div class="result-img-wrap">
-                <img id="result-img" src="" alt="Ảnh kết quả phân loại" class="result-img" />
+            <div class="stream-body image-card-body">
+              <!-- Placeholder -->
+              <div id="result-placeholder" class="result-placeholder">
+                <div class="placeholder-icon" aria-hidden="true">
+                  <svg viewBox="0 0 64 64" fill="none" width="56" height="56">
+                    <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="1.8" stroke-dasharray="6 4" opacity=".35"/>
+                    <path d="M32 20v14M32 38v4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <p id="result-placeholder-text" class="placeholder-text">Tải ảnh lên để bắt đầu phân tích</p>
+                <p id="result-placeholder-sub" class="placeholder-sub">Kết quả nhận diện kèm bounding box sẽ hiển thị tại đây</p>
               </div>
-            </div>
 
-            <div id="loading-overlay" class="loading-overlay hidden">
-              <div class="spinner large"></div>
-              <p>Đang phân tích ảnh...</p>
-              <p class="loading-sub">YOLO11n · imgsz=640</p>
+              <!-- Result Content -->
+              <div id="result-content" class="result-content hidden">
+                <div class="result-img-wrap" onclick="clearDetectionFocus()" title="Bấm vào ảnh để bỏ chọn vật thể">
+                  <img id="result-img" src="" alt="Ảnh kết quả phân loại" class="stream-img" />
+                  <div id="detection-focus-overlay" class="detection-focus-overlay hidden" aria-hidden="true">
+                    <canvas id="detection-focus-canvas" class="detection-focus-canvas"></canvas>
+                    <span id="detection-focus-hint" class="detection-focus-hint">Bấm vào ảnh để bỏ chọn</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Loading Overlay -->
+              <div id="loading-overlay" class="loading-overlay hidden">
+                <div class="spinner large"></div>
+                <p>Đang phân tích ảnh...</p>
+                <p class="loading-sub">YOLO11n · imgsz=640</p>
+              </div>
             </div>
           </div>
 
         </div>
 
-        <!-- Stats & detection cards — tách riêng khỏi khung ảnh kết quả -->
+        <!-- Một khung thông số chung, nằm dưới hai khung ảnh -->
         <div id="result-extra" class="result-extra hidden">
-
-          <div class="stats-card">
-            <div class="result-meta" id="result-meta">
-              <span id="result-count-badge"></span>
+          <div class="side-card image-details-card">
+            <div class="side-card-title image-details-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M4 4h16v16H4zM8 9h8M8 13h8M8 17h5"/></svg>
+              Thông Số Nhận Diện Ảnh
+              <span id="result-count-badge" class="count-badge"></span>
             </div>
 
-            <div id="result-summary" class="result-summary hidden">
-              <div class="summary-kpis">
-                <div class="summary-kpi">
-                  <span class="summary-kpi-val" id="sum-total">0</span>
-                  <span class="summary-kpi-label">Tổng vật thể</span>
+            <div class="image-details-grid">
+              <section class="image-detail-section">
+                <h3 class="image-detail-heading">Tổng Quan</h3>
+                <div id="result-summary" class="result-summary-compact">
+                  <div class="model-info-card image-kpi-grid">
+                    <div class="info-cell"><span class="info-k">Đã xác nhận</span><span class="info-v" id="sum-total">0</span></div>
+                    <div class="info-cell"><span class="info-k">Số loại rác</span><span class="info-v" id="sum-classes">0</span></div>
+                    <div class="info-cell"><span class="info-k">Độ tin cậy TB</span><span class="info-v" id="sum-avg-conf">—</span></div>
+                    <div class="info-cell"><span class="info-k">Loại rác chính</span><span class="info-v class-label-value" id="sum-top-label">—</span></div>
+                    <div class="info-cell"><span class="info-k">Tin cậy cao nhất</span><span class="info-v" id="sum-max-conf">—</span></div>
+                    <div class="info-cell"><span class="info-k">Tin cậy thấp nhất</span><span class="info-v" id="sum-min-conf">—</span></div>
+                  </div>
                 </div>
-                <div class="summary-kpi">
-                  <span class="summary-kpi-val" id="sum-classes">0</span>
-                  <span class="summary-kpi-label">Số loại rác</span>
+              </section>
+
+              <section class="image-detail-section">
+                <h3 class="image-detail-heading">Vật Thể Đã Xác Nhận</h3>
+                <div id="detection-list" class="detection-list"></div>
+                <details id="uncertain-results" class="uncertain-results hidden">
+                  <summary>
+                    <span>Cần kiểm tra</span>
+                    <span id="uncertain-count-badge" class="uncertain-count-badge">0</span>
+                  </summary>
+                  <p id="uncertain-note" class="uncertain-note"></p>
+                  <div id="uncertain-list" class="detection-list uncertain-list"></div>
+                </details>
+              </section>
+
+              <section class="image-detail-section">
+                <h3 class="image-detail-heading">Phân Bố &amp; Hiệu Năng</h3>
+                <div class="summary-breakdown" id="summary-breakdown"></div>
+
+                <div id="timing-card" class="timing-subcard">
+                  <div class="timing-breakdown" id="timing-breakdown"></div>
+                  <div class="timing-row"><span>Ngưỡng xác nhận</span><span id="sum-review-conf">—</span></div>
+                  <div class="timing-row"><span>Ứng viên cần kiểm tra</span><span id="sum-uncertain">0</span></div>
+                  <div class="timing-row"><span>Kích thước ảnh gốc</span><span id="sum-img-size">—</span></div>
+                  <div class="timing-row"><span>Thời gian tổng cộng</span><span id="sum-time">—</span></div>
                 </div>
-                <div class="summary-kpi">
-                  <span class="summary-kpi-val" id="sum-avg-conf">—</span>
-                  <span class="summary-kpi-label">Độ tin cậy TB</span>
-                </div>
-                <div class="summary-kpi">
-                  <span class="summary-kpi-val" id="sum-max-conf">—</span>
-                  <span class="summary-kpi-label">Tin cậy cao nhất</span>
-                </div>
-                <div class="summary-kpi">
-                  <span class="summary-kpi-val" id="sum-min-conf">—</span>
-                  <span class="summary-kpi-label">Tin cậy thấp nhất</span>
-                </div>
-                <div class="summary-kpi">
-                  <span class="summary-kpi-val is-text" id="sum-top-label">—</span>
-                  <span class="summary-kpi-label">Loại rác nhiều nhất</span>
-                </div>
-                <div class="summary-kpi">
-                  <span class="summary-kpi-val" id="sum-time">—</span>
-                  <span class="summary-kpi-label">Thời gian xử lý</span>
-                </div>
-                <div class="summary-kpi">
-                  <span class="summary-kpi-val" id="sum-img-size">—</span>
-                  <span class="summary-kpi-label">Kích thước ảnh</span>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <!-- Biểu đồ tổng quan nhận diện ảnh -->
+        <div id="img-overview-chart" class="result-extra hidden">
+          <div class="side-card overview-chart-card">
+            <div class="side-card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M3 3v18h18M7 15l4-5 3 3 5-7"/></svg>
+              Biểu Đồ Tổng Quan Nhận Diện Ảnh
+            </div>
+            <div class="overview-chart-body">
+              <div class="overview-donut-wrap">
+                <svg id="img-donut-svg" class="donut-svg" viewBox="0 0 200 200" aria-hidden="true"></svg>
+                <div class="donut-center-label">
+                  <span id="img-donut-total" class="donut-total">0</span>
+                  <span class="donut-sub">vật thể</span>
                 </div>
               </div>
-
-              <div class="summary-section-title">Tỷ Lệ Theo Loại Rác</div>
-              <div class="summary-breakdown" id="summary-breakdown"></div>
+              <div class="overview-bar-wrap">
+                <div class="overview-bar-title">Phân bố theo loại rác</div>
+                <div id="img-bar-chart" class="overview-bars"></div>
+              </div>
+              <div class="overview-conf-wrap">
+                <div class="overview-bar-title">Độ tin cậy từng loại</div>
+                <div id="img-conf-chart" class="overview-bars"></div>
+              </div>
             </div>
-
-            <div id="detection-list" class="detection-list"></div>
           </div>
-
-          <div id="timing-card" class="timing-card hidden">
-            <div class="timing-card-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-              Chi Tiết Thời Gian Xử Lý
-            </div>
-            <div class="timing-breakdown" id="timing-breakdown"></div>
-          </div>
-
         </div>
       </section>
 
       <!-- ── Tab: Video ────────────────────────────────────────── -->
       <section id="tab-video" class="tab-content" role="tabpanel">
 
-        <div id="video-upload-panel" class="image-layout">
-          <div class="upload-panel">
-            <div id="video-upload-area" class="upload-area"
-                 ondragover="onVideoDragOver(event)" ondragleave="onVideoDragLeave(event)" ondrop="onVideoDrop(event)">
-              <div class="upload-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="56" height="56">
+        <div id="video-upload-panel" class="image-layout image-recognition-layout video-recognition-layout">
+          <div class="stream-card image-card video-card">
+            <div class="stream-topbar">
+              <div class="card-pill">
+                <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="2" y="5" width="15" height="14" rx="2"/><path d="M17 10l5-3v10l-5-3"/>
                 </svg>
+                <span>VIDEO ĐẦU VÀO</span>
               </div>
-              <p class="upload-title">Kéo &amp; Thả Video Vào Đây</p>
-              <p class="upload-sub">hoặc nhấn để chọn từ máy tính</p>
-              <button class="btn-select" onclick="document.getElementById('video-file-input').click()">
-                Chọn Tệp Video
-              </button>
-              <p class="upload-hint">Hỗ trợ MP4 · MOV · AVI · MKV · WEBM · tối đa 100MB</p>
-              <input type="file" id="video-file-input" accept="video/*" hidden onchange="handleVideoFileSelect(this)" />
+              <div class="stream-controls">
+                <div class="stat-chip">
+                  <span class="stat-label">Trạng thái</span>
+                  <span class="stat-val" id="video-status-val">Chưa chọn video</span>
+                </div>
+                <button id="video-change-btn" class="camera-toggle hidden" type="button"
+                        onclick="document.getElementById('video-file-input').click()">
+                  <span class="camera-toggle-icon" aria-hidden="true">↻</span>
+                  <span>Đổi video</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="stream-body image-card-body video-card-body">
+              <div id="video-upload-area" class="upload-dropzone"
+                   ondragover="onVideoDragOver(event)" ondragleave="onVideoDragLeave(event)" ondrop="onVideoDrop(event)"
+                   onclick="document.getElementById('video-file-input').click()">
+                <div class="upload-dropzone-inner">
+                  <div class="upload-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="52" height="52">
+                      <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 12V4m0 0l-3 3m3-3l3 3"/>
+                      <path d="M4 12.5V5a1 1 0 011-1h14a1 1 0 011 1v7.5" stroke-dasharray="3 3"/>
+                    </svg>
+                  </div>
+                  <h3 class="upload-title">Kéo &amp; Thả Video Vào Đây</h3>
+                  <p class="upload-sub">hoặc nhấn để duyệt tệp từ thiết bị</p>
+                  <button class="btn-select" type="button"
+                          onclick="event.stopPropagation(); document.getElementById('video-file-input').click()">
+                    Chọn Tệp Video
+                  </button>
+                  <p class="upload-hint">MP4 · MOV · AVI · MKV · WEBM · tối đa 100MB</p>
+                </div>
+              </div>
+
+              <div id="video-original-wrap" class="video-preview-wrap hidden">
+                <div class="video-player-shell">
+                  <video id="video-original" class="video-player" controls playsinline preload="metadata"></video>
+                </div>
+              </div>
+              <input type="file" id="video-file-input" accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/webm"
+                     hidden onchange="handleVideoFileSelect(this)" />
             </div>
           </div>
 
-          <div class="results-panel">
-            <div id="video-placeholder" class="result-placeholder">
-              <div class="placeholder-icon" aria-hidden="true">
-                <svg viewBox="0 0 64 64" fill="none" width="64" height="64">
-                  <circle cx="32" cy="32" r="30" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 4" opacity=".3"/>
-                  <path d="M32 20v12M32 36v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <div class="stream-card image-card video-card" id="video-result-panel">
+            <div class="stream-topbar">
+              <div class="card-pill">
+                <svg class="pill-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
                 </svg>
+                <span>KẾT QUẢ NHẬN DIỆN</span>
               </div>
-              <p class="placeholder-text">Tải video lên để bắt đầu nhận diện</p>
-              <p class="placeholder-sub">Video gốc và video đã nhận diện sẽ phát song song</p>
+              <div class="stream-controls">
+                <div class="stat-chip">
+                  <span class="stat-label">Tiến độ</span>
+                  <span class="stat-val" id="video-progress-val">—</span>
+                </div>
+                <div class="stat-chip">
+                  <span class="stat-label">Xử lý</span>
+                  <span class="stat-val" id="video-time-val">—</span>
+                </div>
+                <label class="video-speed-control" for="video-speed-select">
+                  <span>Tốc độ</span>
+                  <select id="video-speed-select" onchange="setVideoPlaybackRate(this.value)" aria-label="Tốc độ phát video">
+                    <option value="0.5">0.5×</option>
+                    <option value="0.75">0.75×</option>
+                    <option value="1" selected>1×</option>
+                    <option value="1.25">1.25×</option>
+                    <option value="1.5">1.5×</option>
+                    <option value="2">2×</option>
+                  </select>
+                </label>
+                <a id="video-download" class="camera-toggle hidden" href="#" download="video-nhan-dien.mp4">
+                  <span class="camera-toggle-icon" aria-hidden="true">⬇</span>
+                  <span>Tải video</span>
+                </a>
+              </div>
             </div>
 
-            <div id="video-progress-wrap" class="loading-overlay hidden">
-              <div class="spinner large"></div>
-              <p>Đang xử lý video...</p>
-              <p class="loading-sub" id="video-progress-text">0%</p>
+            <div class="stream-body image-card-body video-card-body">
+              <div id="video-placeholder" class="result-placeholder">
+                <div class="placeholder-icon" aria-hidden="true">
+                  <svg viewBox="0 0 64 64" fill="none" width="56" height="56">
+                    <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="1.8" stroke-dasharray="6 4" opacity=".35"/>
+                    <path d="M32 20v14M32 38v4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <p class="placeholder-text">Tải video lên để bắt đầu phân tích</p>
+                <p class="placeholder-sub">Video có bounding box sẽ hiển thị tại đây</p>
+              </div>
+
+              <div id="video-result-content" class="video-preview-wrap hidden">
+                <div class="video-player-shell">
+                  <video id="video-annotated" class="video-player" controls playsinline preload="metadata"></video>
+                </div>
+              </div>
+
+              <div id="video-progress-wrap" class="loading-overlay video-loading-overlay hidden">
+                <div class="spinner large"></div>
+                <p id="video-progress-stage">Đang tải video lên...</p>
+                <div class="video-progress-track" aria-hidden="true">
+                  <div id="video-progress-fill" class="video-progress-fill"></div>
+                </div>
+                <p class="loading-sub" id="video-progress-text">0%</p>
+              </div>
             </div>
           </div>
         </div>
 
-        <div id="video-compare-wrap" class="video-compare-wrap hidden">
-          <div class="video-compare-grid">
-            <div class="video-compare-col">
-              <div class="video-compare-title">Video Gốc</div>
-              <video id="video-original" class="video-compare-player" controls playsinline></video>
+        <div id="video-extra" class="result-extra hidden">
+          <div class="side-card image-details-card video-details-card">
+            <div class="side-card-title image-details-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M4 4h16v16H4zM8 9h8M8 13h8M8 17h5"/></svg>
+              Thông Số Nhận Diện Video
+              <span id="video-result-badge" class="count-badge">Đang chuẩn bị</span>
             </div>
-            <div class="video-compare-col">
-              <div class="video-compare-title">Video Nhận Diện</div>
-              <video id="video-annotated" class="video-compare-player" controls playsinline></video>
+
+            <div class="image-details-grid">
+              <section class="image-detail-section">
+                <h3 class="image-detail-heading">Video Đầu Vào</h3>
+                <div class="model-info-card image-kpi-grid">
+                  <div class="info-cell"><span class="info-k">Tên tệp</span><span class="info-v" id="video-info-name">—</span></div>
+                  <div class="info-cell"><span class="info-k">Dung lượng</span><span class="info-v" id="video-info-size">—</span></div>
+                  <div class="info-cell"><span class="info-k">Thời lượng</span><span class="info-v" id="video-info-duration">—</span></div>
+                  <div class="info-cell"><span class="info-k">Độ phân giải</span><span class="info-v" id="video-info-resolution">—</span></div>
+                </div>
+              </section>
+
+              <section class="image-detail-section">
+                <h3 class="image-detail-heading">Kết Quả Theo Khung Hình</h3>
+                <div class="model-info-card image-kpi-grid video-detection-kpis">
+                  <div class="info-cell"><span class="info-k">Lượt phát hiện</span><span class="info-v" id="video-detection-events">—</span></div>
+                  <div class="info-cell"><span class="info-k">Frame có vật thể</span><span class="info-v" id="video-detection-frames">—</span></div>
+                  <div class="info-cell"><span class="info-k">Tin cậy TB</span><span class="info-v" id="video-average-conf">—</span></div>
+                  <div class="info-cell"><span class="info-k">Loại chính</span><span class="info-v class-label-value" id="video-top-label">—</span></div>
+                </div>
+                <div id="video-class-breakdown" class="summary-breakdown video-class-breakdown"></div>
+              </section>
+
+              <section class="image-detail-section">
+                <h3 class="image-detail-heading">Tải Lên &amp; Xử Lý</h3>
+                <div class="timing-row"><span>Trạng thái</span><span id="video-phase">Chờ tải lên</span></div>
+                <div class="timing-row"><span>Thời gian tải lên</span><span id="video-upload-time">—</span></div>
+                <div class="timing-row"><span>Thời gian xử lý</span><span id="video-processing-time">—</span></div>
+                <div class="timing-row"><span>Tốc độ xử lý</span><span id="video-processing-fps">—</span></div>
+                <div class="timing-row"><span>Tần suất phân tích</span><span id="video-analysis-rate">—</span></div>
+                <div class="timing-row timing-row-total"><span>Codec nguồn</span><span id="video-source-codec">—</span></div>
+              </section>
             </div>
           </div>
-          <button class="btn-select" onclick="resetVideoUpload()">Tải Video Khác</button>
+        </div>
+
+        <!-- Biểu đồ tổng quan nhận diện video -->
+        <div id="video-overview-chart" class="result-extra hidden">
+          <div class="side-card overview-chart-card">
+            <div class="side-card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M3 3v18h18M7 15l4-5 3 3 5-7"/></svg>
+              Biểu Đồ Tổng Quan Nhận Diện Video
+            </div>
+            <div class="overview-chart-body">
+              <div class="overview-donut-wrap">
+                <svg id="video-donut-svg" class="donut-svg" viewBox="0 0 200 200" aria-hidden="true"></svg>
+                <div class="donut-center-label">
+                  <span id="video-donut-total" class="donut-total">0</span>
+                  <span class="donut-sub">lượt phát hiện</span>
+                </div>
+              </div>
+              <div class="overview-bar-wrap">
+                <div class="overview-bar-title">Phân bố theo loại rác</div>
+                <div id="video-bar-chart" class="overview-bars"></div>
+              </div>
+              <div class="overview-conf-wrap">
+                <div class="overview-bar-title">Độ tin cậy trung bình từng loại</div>
+                <div id="video-conf-chart" class="overview-bars"></div>
+              </div>
+            </div>
+          </div>
         </div>
 
       </section>
@@ -386,24 +606,24 @@
           <!-- KPI Row -->
           <div class="kpi-row" id="kpi-row">
             <div class="kpi-card">
-              <span class="kpi-label">Precision</span>
+              <span class="kpi-label">Độ chính xác (Precision)</span>
               <span class="kpi-val" id="kpi-precision">—</span>
-              <span class="kpi-sub">tại epoch tốt nhất</span>
+              <span class="kpi-sub">Tập xác thực · vòng tốt nhất</span>
             </div>
             <div class="kpi-card">
-              <span class="kpi-label">Recall</span>
+              <span class="kpi-label">Độ bao phủ (Recall)</span>
               <span class="kpi-val" id="kpi-recall">—</span>
-              <span class="kpi-sub">tại epoch tốt nhất</span>
+              <span class="kpi-sub">Tập xác thực · vòng tốt nhất</span>
             </div>
             <div class="kpi-card kpi-card-accent">
               <span class="kpi-label">mAP@0.5</span>
               <span class="kpi-val" id="kpi-map50">—</span>
-              <span class="kpi-sub">tại epoch tốt nhất</span>
+              <span class="kpi-sub">Độ chính xác trung bình · IoU 0,5</span>
             </div>
             <div class="kpi-card">
               <span class="kpi-label">mAP@0.5:0.95</span>
               <span class="kpi-val" id="kpi-map5095">—</span>
-              <span class="kpi-sub">tại epoch tốt nhất</span>
+              <span class="kpi-sub">Độ chính xác trung bình · IoU 0,5–0,95</span>
             </div>
           </div>
 
@@ -417,11 +637,13 @@
               </div>
               <div class="model-info-card" id="train-info-card">
                 <div class="info-cell"><span class="info-k">Mô hình</span><span class="info-v">YOLO11n</span></div>
-                <div class="info-cell"><span class="info-k">Bộ dữ liệu</span><span class="info-v" id="ti-dataset">—</span></div>
-                <div class="info-cell"><span class="info-k">Số vòng huấn luyện</span><span class="info-v" id="ti-epochs">—</span></div>
-                <div class="info-cell"><span class="info-k">Epoch tốt nhất</span><span class="info-v" id="ti-best-epoch">—</span></div>
+                <div class="info-cell"><span class="info-k">Bộ dữ liệu (dataset)</span><span class="info-v" id="ti-dataset">—</span></div>
+                <div class="info-cell"><span class="info-k">Lần huấn luyện (training run)</span><span class="info-v" id="ti-run">—</span></div>
+                <div class="info-cell"><span class="info-k">Số vòng huấn luyện (epoch)</span><span class="info-v" id="ti-epochs">—</span></div>
+                <div class="info-cell"><span class="info-k">Vòng tốt nhất (epoch)</span><span class="info-v" id="ti-best-epoch">—</span></div>
                 <div class="info-cell"><span class="info-k">Số lớp</span><span class="info-v" id="ti-classes">—</span></div>
-                <div class="info-cell"><span class="info-k">Thiết bị huấn luyện</span><span class="info-v">RTX 3050</span></div>
+                <div class="info-cell"><span class="info-k">Thiết bị huấn luyện</span><span class="info-v" id="ti-training-device">—</span></div>
+                <div class="info-cell"><span class="info-k">Thiết bị đang chạy</span><span class="info-v" id="ti-runtime-device">—</span></div>
               </div>
             </div>
 
@@ -433,17 +655,17 @@
               </div>
               <div class="split-bars" id="split-bars">
                 <div class="split-row">
-                  <span class="split-name">Train</span>
+                  <span class="split-name">Huấn luyện</span>
                   <div class="split-track"><div class="split-fill split-train" id="split-train-fill"></div></div>
                   <span class="split-count" id="split-train-count">—</span>
                 </div>
                 <div class="split-row">
-                  <span class="split-name">Valid</span>
+                  <span class="split-name">Xác thực</span>
                   <div class="split-track"><div class="split-fill split-valid" id="split-valid-fill"></div></div>
                   <span class="split-count" id="split-valid-count">—</span>
                 </div>
                 <div class="split-row">
-                  <span class="split-name">Test</span>
+                  <span class="split-name">Kiểm tra</span>
                   <div class="split-track"><div class="split-fill split-test" id="split-test-fill"></div></div>
                   <span class="split-count" id="split-test-count">—</span>
                 </div>
@@ -454,9 +676,35 @@
             <div class="side-card stats-info-card stats-span-2">
               <div class="side-card-title">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M4 6h16M4 12h10M4 18h7"/></svg>
-                Phân Bố Nhãn Theo Lớp Rác Thải
+                Phân Bố Nhãn Theo Lớp Rác Thải · Toàn Bộ Bộ Dữ Liệu
               </div>
               <div class="label-bars" id="label-bars"></div>
+            </div>
+
+            <!-- Independent test evaluation -->
+            <div class="side-card stats-info-card stats-span-2">
+              <div class="side-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                Đánh Giá Riêng Trên Tập Kiểm Tra
+              </div>
+              <div id="test-eval-content">
+                <div class="test-kpi-grid">
+                  <div class="test-kpi"><span>Độ chính xác (Precision)</span><strong id="test-precision">—</strong></div>
+                  <div class="test-kpi"><span>Độ bao phủ (Recall)</span><strong id="test-recall">—</strong></div>
+                  <div class="test-kpi"><span>mAP@0.5</span><strong id="test-map50">—</strong></div>
+                  <div class="test-kpi"><span>mAP@0.5:0.95</span><strong id="test-map5095">—</strong></div>
+                </div>
+                <p class="test-meta" id="test-meta">—</p>
+                <div class="test-table-wrap">
+                  <table class="test-table">
+                    <thead>
+                      <tr><th>Lớp rác</th><th>Số đối tượng</th><th>Độ chính xác</th><th>Độ bao phủ</th><th>mAP@0.5</th><th>mAP@0.5:0.95</th></tr>
+                    </thead>
+                    <tbody id="test-class-body"></tbody>
+                  </table>
+                </div>
+              </div>
+              <p class="test-empty hidden" id="test-eval-empty">Chưa có kết quả đánh giá riêng trên tập Test.</p>
             </div>
 
           </div>
@@ -464,19 +712,19 @@
           <!-- Charts from real training artifacts -->
           <div class="chart-grid">
             <div class="chart-card">
-              <div class="chart-title">Đường Cong Huấn Luyện (Loss &amp; Metrics)</div>
+              <div class="chart-title">Đường Cong Huấn Luyện (Sai số và Chỉ số)</div>
               <img class="chart-img" src="/api/training-artifact/results.png" alt="Training results curves" loading="lazy" />
             </div>
             <div class="chart-card">
-              <div class="chart-title">Ma Trận Nhầm Lẫn (Chuẩn Hóa)</div>
+              <div class="chart-title">Ma Trận Nhầm Lẫn (Đã Chuẩn Hóa)</div>
               <img class="chart-img" src="/api/training-artifact/confusion_matrix_normalized.png" alt="Confusion matrix normalized" loading="lazy" />
             </div>
             <div class="chart-card">
-              <div class="chart-title">Đường Cong Precision–Recall</div>
+              <div class="chart-title">Đường Cong Độ Chính Xác – Độ Bao Phủ</div>
               <img class="chart-img" src="/api/training-artifact/BoxPR_curve.png" alt="Precision-Recall curve" loading="lazy" />
             </div>
             <div class="chart-card">
-              <div class="chart-title">Phân Bố Nhãn &amp; Kích Thước Bounding Box</div>
+              <div class="chart-title">Phân Bố Nhãn và Kích Thước Khung Bao · Tập Huấn Luyện</div>
               <img class="chart-img" src="/api/training-artifact/labels.jpg" alt="Label distribution" loading="lazy" />
             </div>
           </div>
@@ -488,7 +736,7 @@
 
     <!-- ── Footer ──────────────────────────────────────────────── -->
     <footer class="app-footer">
-      <p>Học phần Học Máy · ICTU · Phân loại rác thải tự động bằng YOLO AI &nbsp;|&nbsp; CPU: Intel Vivobook X1505VA</p>
+      <p>Học phần Học Máy · ICTU · Phân loại rác thải tự động bằng YOLO</p>
     </footer>
 
   </div><!-- /.app-wrapper -->
@@ -501,6 +749,12 @@
     let statsInterval = null;
     let selectedFile  = null;
     let statsLoaded   = false;
+    let cameraVisible = false;
+    let resultImageSize = null;
+    let resultDetectionGroups = { confirmed: [], uncertain: [] };
+    let activeDetectionFocus = null;
+    let streamRequestId = 0;
+    let cameraConnectTimer = null;
 
     /* ═══════════════════════════════════════════════════
        Tab Switching
@@ -518,8 +772,12 @@
         el.classList.toggle('active', el.id === `tab-${tab}`);
       });
 
-      if (tab === 'webcam') startStream();
-      else                  stopStream();
+      if (tab === 'webcam') {
+        if (cameraVisible) startStream();
+        else               stopStream(true);
+      } else {
+        stopStream(false);
+      }
 
       if (tab === 'stats' && !statsLoaded) loadTrainingStats();
     }
@@ -527,38 +785,154 @@
     /* ═══════════════════════════════════════════════════
        Webcam Stream
     ═══════════════════════════════════════════════════ */
+    function setCameraToggleState() {
+      const toggle = document.getElementById('camera-toggle');
+      toggle.setAttribute('aria-pressed', String(cameraVisible));
+      document.getElementById('camera-toggle-label').textContent = cameraVisible ? 'Ẩn camera' : 'Hiện camera';
+    }
+
+    function showCameraState(state) {
+      const overlay = document.getElementById('stream-overlay');
+      const states = {
+        connecting: {
+          title: 'Đang kết nối camera...',
+          detail: 'Vui lòng chờ trong giây lát.',
+        },
+        off: {
+          title: 'Camera đang tắt',
+          detail: 'Nhấn “Hiện camera” để bật lại.',
+        },
+        error: {
+          title: 'Không thể kết nối camera',
+          detail: 'Kiểm tra webcam hoặc khởi động lại server.',
+        },
+        controlError: {
+          title: 'Không thể thay đổi trạng thái camera',
+          detail: 'Vui lòng kiểm tra kết nối tới server.',
+        },
+      };
+      const content = states[state];
+      const cameraOffIcon = `<div class="camera-state-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
+          <circle cx="12" cy="12" r="6.25" stroke="currentColor" stroke-width="1.7"/>
+          <circle cx="12" cy="12" r="3.6" fill="currentColor"/>
+        </svg>
+      </div>`;
+      const indicator = state === 'connecting'
+        ? '<div class="spinner"></div>'
+        : state === 'off'
+          ? cameraOffIcon
+          : '<div class="camera-state-icon camera-state-alert-icon" aria-hidden="true">!</div>';
+
+      overlay.className = `stream-overlay stream-overlay-${state}`;
+      overlay.innerHTML = `<div class="stream-overlay-inner camera-state camera-state-${state}" role="status" aria-live="polite">
+        ${indicator}
+        <div class="camera-state-copy">
+          <p class="camera-state-title">${content.title}</p>
+          <p class="camera-state-detail">${content.detail}</p>
+        </div>
+      </div>`;
+      overlay.style.display = 'flex';
+    }
+
     function startStream() {
+      if (!cameraVisible) return;
+
       const img     = document.getElementById('cam-img');
       const overlay = document.getElementById('stream-overlay');
       const liveDot = document.getElementById('live-dot');
+      const requestId = ++streamRequestId;
 
-      overlay.style.display = 'flex';
+      showCameraState('connecting');
       liveDot.classList.remove('live-dot-active');
 
-      // Cache-buster để buộc browser mở kết nối mới
-      img.src = `/video_feed?t=${Date.now()}`;
-
       img.onload = () => {
+        if (requestId !== streamRequestId || !cameraVisible || currentTab !== 'webcam') return;
+        if (cameraConnectTimer) { clearTimeout(cameraConnectTimer); cameraConnectTimer = null; }
         overlay.style.display = 'none';
         liveDot.classList.add('live-dot-active');
       };
 
       img.onerror = () => {
-        overlay.innerHTML = `<div class="stream-overlay-inner">
-          <p style="color:#ef4444;">⚠ Không thể kết nối camera.<br/>Kiểm tra webcam và khởi động lại server.</p>
-        </div>`;
+        if (requestId !== streamRequestId || !cameraVisible || currentTab !== 'webcam') return;
+        liveDot.classList.remove('live-dot-active');
+        showCameraState('error');
       };
 
+      // Cache-buster để buộc browser mở kết nối mới
+      img.src = `/video_feed?t=${Date.now()}`;
+
+      if (cameraConnectTimer) clearTimeout(cameraConnectTimer);
+      cameraConnectTimer = setTimeout(() => {
+        if (requestId !== streamRequestId || !cameraVisible || currentTab !== 'webcam') return;
+        liveDot.classList.remove('live-dot-active');
+        showCameraState('error');
+      }, 8000);
+
+      if (statsInterval) clearInterval(statsInterval);
+      fetchStats();
       statsInterval = setInterval(fetchStats, 1200);
     }
 
-    function stopStream() {
+    function stopStream(showHiddenState = false) {
       const img = document.getElementById('cam-img');
-      img.src = '';
+      streamRequestId += 1;
+      img.onload = null;
+      img.onerror = null;
+      img.removeAttribute('src');
+      if (cameraConnectTimer) { clearTimeout(cameraConnectTimer); cameraConnectTimer = null; }
       document.getElementById('live-dot').classList.remove('live-dot-active');
       if (statsInterval) { clearInterval(statsInterval); statsInterval = null; }
       document.getElementById('fps-val').textContent = '—';
       document.getElementById('det-val').textContent = '—';
+
+      const overlay = document.getElementById('stream-overlay');
+      if (showHiddenState) {
+        showCameraState('off');
+      } else {
+        overlay.style.display = 'none';
+      }
+    }
+
+    async function toggleCameraVisibility() {
+      const nextState = !cameraVisible;
+      const toggle = document.getElementById('camera-toggle');
+      toggle.disabled = true;
+
+      try {
+        const response = await fetch(`/api/camera-toggle?enabled=${nextState}`, { method: 'POST' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        cameraVisible = data.enabled;
+        setCameraToggleState();
+
+        if (cameraVisible) {
+          startStream();
+        } else {
+          stopStream(true);
+        }
+      } catch (error) {
+        console.error('Không thể thay đổi trạng thái camera:', error);
+        setCameraToggleState();
+        showCameraState('controlError');
+      } finally {
+        toggle.disabled = false;
+      }
+    }
+
+    async function initCamera() {
+      cameraVisible = false;
+      setCameraToggleState();
+      stopStream(true);
+
+      try {
+        // Mỗi lần mở/refresh trang đều đưa webcam về trạng thái tắt.
+        const response = await fetch('/api/camera-toggle?enabled=false', { method: 'POST' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      } catch (error) {
+        console.error('Không thể đặt trạng thái camera mặc định:', error);
+        showCameraState('controlError');
+      }
     }
 
     async function fetchStats() {
@@ -595,6 +969,10 @@
         document.getElementById('preview-img').src = e.target.result;
         document.getElementById('upload-area').classList.add('hidden');
         document.getElementById('preview-wrap').classList.remove('hidden');
+        const uploadStatus = document.getElementById('upload-status-val');
+        uploadStatus.textContent = file.name;
+        uploadStatus.title = file.name;
+        document.getElementById('btn-reupload').classList.remove('hidden');
         resetResults();
       };
       reader.readAsDataURL(file);
@@ -605,15 +983,30 @@
       document.getElementById('file-input').value = '';
       document.getElementById('upload-area').classList.remove('hidden');
       document.getElementById('preview-wrap').classList.add('hidden');
+      const uploadStatus = document.getElementById('upload-status-val');
+      uploadStatus.textContent = 'Chưa chọn ảnh';
+      uploadStatus.removeAttribute('title');
+      document.getElementById('btn-reupload').classList.add('hidden');
       resetResults();
     }
 
     function resetResults() {
-      document.getElementById('result-placeholder').classList.remove('hidden');
+      clearDetectionFocus();
+      resultImageSize = null;
+      resultDetectionGroups = { confirmed: [], uncertain: [] };
+      const placeholder = document.getElementById('result-placeholder');
+      placeholder.classList.remove('hidden');
+      placeholder.classList.remove('is-error');
+      document.getElementById('result-placeholder-text').textContent = 'Tải ảnh lên để bắt đầu phân tích';
+      document.getElementById('result-placeholder-sub').textContent = 'Kết quả nhận diện kèm bounding box sẽ hiển thị tại đây';
       document.getElementById('result-content').classList.add('hidden');
+      document.getElementById('result-download').classList.add('hidden');
+      document.getElementById('result-download').removeAttribute('href');
       document.getElementById('loading-overlay').classList.add('hidden');
       document.getElementById('result-extra').classList.add('hidden');
       document.getElementById('timing-card').classList.add('hidden');
+      document.getElementById('img-det-val').textContent = '—';
+      document.getElementById('img-time-val').textContent = '—';
     }
 
     /* ── Prediction ── */
@@ -628,6 +1021,8 @@
       document.getElementById('result-content').classList.add('hidden');
       document.getElementById('result-extra').classList.add('hidden');
       document.getElementById('loading-overlay').classList.remove('hidden');
+      document.getElementById('img-det-val').textContent = '…';
+      document.getElementById('img-time-val').textContent = '…';
 
       const fd = new FormData();
       fd.append('file', selectedFile);
@@ -638,11 +1033,13 @@
         const data = await r.json();
         showResults(data);
       } catch (err) {
-        document.getElementById('loading-overlay').innerHTML =
-          `<div style="text-align:center;color:#ef4444;padding:24px">
-            ⚠ Lỗi: ${err.message}
-            <br/><button class="btn-select" style="margin-top:14px" onclick="resetResults()">Thử lại</button>
-          </div>`;
+        const placeholder = document.getElementById('result-placeholder');
+        placeholder.classList.remove('hidden');
+        placeholder.classList.add('is-error');
+        document.getElementById('result-placeholder-text').textContent = 'Không thể phân tích ảnh';
+        document.getElementById('result-placeholder-sub').textContent = `Lỗi: ${err.message}. Vui lòng thử lại.`;
+        document.getElementById('img-det-val').textContent = 'Lỗi';
+        document.getElementById('img-time-val').textContent = '—';
       } finally {
         btn.disabled = false;
         btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg> Phân Loại Ngay`;
@@ -658,22 +1055,60 @@
       'PLASTIC':       'plas',
     };
 
+    const LABEL_FOCUS_COLOR = {
+      'BIODEGRADABLE': '#22c55e',
+      'GLASS':         '#a855f7',
+      'METAL':         '#eab308',
+      'PAPER':         '#f97316',
+      'PLASTIC':       '#ef4444',
+    };
+
     function showResults(data) {
-      document.getElementById('result-img').src = `data:image/jpeg;base64,${data.image_b64}`;
+      const resultImageUrl = `data:image/jpeg;base64,${data.image_b64}`;
+      const reviewConfidence = Number(data.review_conf ?? IMG_REVIEW_THRESHOLD);
+      const detections = Array.isArray(data.detections) ? data.detections : [];
+      const confirmedDetections = detections.filter(det =>
+        det.status === 'confirmed' || (det.status !== 'uncertain' && det.conf >= reviewConfidence)
+      );
+      const uncertainDetections = detections.filter(det => !confirmedDetections.includes(det));
+      const confirmedCount = confirmedDetections.length;
+
+      clearDetectionFocus();
+      resultImageSize = data.image_size || null;
+      resultDetectionGroups = {
+        confirmed: confirmedDetections,
+        uncertain: uncertainDetections,
+      };
+
+      const resultImage = document.getElementById('result-img');
+      resultImage.onload = updateDetectionFocus;
+      resultImage.src = resultImageUrl;
+      const download = document.getElementById('result-download');
+      download.href = resultImageUrl;
+      download.classList.remove('hidden');
       document.getElementById('result-extra').classList.remove('hidden');
+      document.getElementById('img-det-val').textContent = confirmedCount;
+      document.getElementById('img-time-val').textContent = data.timing_ms ? `${data.timing_ms.total} ms` : '—';
 
       const countBadge = document.getElementById('result-count-badge');
       const summaryBox = document.getElementById('result-summary');
       const timingCard = document.getElementById('timing-card');
+      document.getElementById('sum-review-conf').textContent = `${reviewConfidence.toFixed(0)}%`;
+      document.getElementById('sum-uncertain').textContent = uncertainDetections.length;
+      document.getElementById('sum-time').textContent = data.timing_ms ? `${data.timing_ms.total} ms` : '—';
+      document.getElementById('sum-img-size').textContent = data.image_size ? `${data.image_size.width}×${data.image_size.height}` : '—';
 
-      if (data.count === 0) {
-        countBadge.textContent = '0 vật thể được phát hiện';
+      if (confirmedCount === 0) {
+        countBadge.textContent = uncertainDetections.length
+          ? `0 xác nhận · ${uncertainDetections.length} cần kiểm tra`
+          : '0 vật thể được phát hiện';
         countBadge.className   = 'count-badge count-zero';
         summaryBox.classList.add('hidden');
+        document.getElementById('summary-breakdown').innerHTML = '';
       } else {
-        countBadge.textContent = `${data.count} vật thể phát hiện`;
+        countBadge.textContent = `${confirmedCount} xác nhận${uncertainDetections.length ? ` · ${uncertainDetections.length} cần kiểm tra` : ''}`;
         countBadge.className   = 'count-badge count-some';
-        renderResultSummary(data);
+        renderResultSummary({ ...data, detections: confirmedDetections, count: confirmedCount });
         summaryBox.classList.remove('hidden');
       }
 
@@ -685,29 +1120,179 @@
       }
 
       const list = document.getElementById('detection-list');
-      if (data.count === 0) {
+      if (confirmedCount === 0) {
         list.innerHTML = `<div class="no-detection">
-          Không phát hiện vật thể rác nào vượt ngưỡng tin cậy (độ tin cậy ≥ ${(IMG_CONF_THRESHOLD * 100).toFixed(0)}%).
+          Không có vật thể nào đạt ngưỡng xác nhận ${reviewConfidence.toFixed(0)}%.
         </div>`;
       } else {
-        list.innerHTML = data.detections.map((det, i) => `
-          <div class="det-card" style="--i:${i}">
-            <div class="det-card-main">
-              <span class="det-label-chip ${LABEL_CSS_CLASS[det.label] || 'other'}">${det.label}</span>
-              <span class="det-conf-badge">${det.conf}%</span>
-            </div>
-            <div class="det-card-sub">
-              <span>Vị trí: [${det.box[0]}, ${det.box[1]}] → [${det.box[2]}, ${det.box[3]}]</span>
-              <span>Diện tích: ${det.area_ratio}% khung hình</span>
-            </div>
-          </div>
-        `).join('');
+        list.innerHTML = renderDetectionCards(confirmedDetections);
+      }
+
+      const uncertainBox = document.getElementById('uncertain-results');
+      if (uncertainDetections.length) {
+        document.getElementById('uncertain-count-badge').textContent = uncertainDetections.length;
+        document.getElementById('uncertain-note').textContent =
+          `Các dự đoán dưới ${reviewConfidence.toFixed(0)}% không được tính vào thống kê chính.`;
+        document.getElementById('uncertain-list').innerHTML = renderDetectionCards(uncertainDetections, true);
+        uncertainBox.classList.remove('hidden');
+        uncertainBox.open = false;
+      } else {
+        uncertainBox.classList.add('hidden');
+        document.getElementById('uncertain-list').innerHTML = '';
       }
 
       document.getElementById('result-content').classList.remove('hidden');
+
+      renderImageOverviewChart(confirmedDetections);
     }
 
-    const IMG_CONF_THRESHOLD = 0.25; // khớp IMG_CONF trong app/server.py
+    const IMG_REVIEW_THRESHOLD = 50; // phần trăm, khớp IMG_REVIEW_CONF trong app/server.py
+
+    function renderDetectionCards(detections, uncertain = false) {
+      const group = uncertain ? 'uncertain' : 'confirmed';
+      return detections.map((det, i) => `
+        <button type="button"
+                class="det-card detection-select-card${uncertain ? ' det-card-uncertain' : ''}"
+                style="--i:${i}"
+                onclick="focusDetection('${group}', ${i}, this)"
+                aria-pressed="false"
+                aria-label="Hiển thị vị trí ${det.label} ${det.conf}% trên ảnh"
+                title="Bấm để làm nổi vật thể này trên ảnh">
+          <div class="det-card-main">
+            <span class="det-label-chip ${LABEL_CSS_CLASS[det.label] || 'other'}">${det.label}</span>
+            <span class="det-conf-badge">${det.conf}%${uncertain ? ' · thấp' : ''}</span>
+          </div>
+          <span class="det-view-state">Đang hiển thị trên ảnh</span>
+          <div class="det-card-sub">
+            <span>Vị trí: [${det.box[0]}, ${det.box[1]}] → [${det.box[2]}, ${det.box[3]}]</span>
+            <span>Diện tích: ${det.area_ratio}% khung hình</span>
+          </div>
+        </button>
+      `).join('');
+    }
+
+    function focusDetection(group, index, card) {
+      const detection = resultDetectionGroups[group]?.[index];
+      if (!detection || !Array.isArray(detection.box)) return;
+
+      const focusKey = `${group}:${index}`;
+      if (activeDetectionFocus?.key === focusKey) {
+        clearDetectionFocus();
+        return;
+      }
+
+      document.querySelectorAll('.detection-select-card.is-selected').forEach(el => {
+        el.classList.remove('is-selected');
+        el.setAttribute('aria-pressed', 'false');
+      });
+      card.classList.add('is-selected');
+      card.setAttribute('aria-pressed', 'true');
+      activeDetectionFocus = { key: focusKey, group, detection, card };
+      updateDetectionFocus();
+      document.getElementById('results-panel').scrollIntoView({ behavior:'smooth', block:'center' });
+    }
+
+    function updateDetectionFocus() {
+      if (!activeDetectionFocus) return;
+
+      const image = document.getElementById('result-img');
+      const sourceImage = document.getElementById('preview-img');
+      const wrapper = image.closest('.result-img-wrap');
+      const overlay = document.getElementById('detection-focus-overlay');
+      const canvas = document.getElementById('detection-focus-canvas');
+      const focusHint = document.getElementById('detection-focus-hint');
+      const detection = activeDetectionFocus.detection;
+      const sourceWidth = Number(resultImageSize?.width || image.naturalWidth);
+      const sourceHeight = Number(resultImageSize?.height || image.naturalHeight);
+
+      if (!sourceWidth || !sourceHeight || !wrapper.clientWidth || !wrapper.clientHeight ||
+          !sourceImage.complete || !sourceImage.naturalWidth || !sourceImage.naturalHeight) return;
+
+      const scale = Math.min(wrapper.clientWidth / sourceWidth, wrapper.clientHeight / sourceHeight);
+      const renderedWidth = sourceWidth * scale;
+      const renderedHeight = sourceHeight * scale;
+      const offsetX = (wrapper.clientWidth - renderedWidth) / 2;
+      const offsetY = (wrapper.clientHeight - renderedHeight) / 2;
+      const rawBox = detection.box.map(Number);
+      const x1 = Math.max(0, Math.min(sourceWidth, rawBox[0]));
+      const y1 = Math.max(0, Math.min(sourceHeight, rawBox[1]));
+      const x2 = Math.max(x1 + 1, Math.min(sourceWidth, rawBox[2]));
+      const y2 = Math.max(y1 + 1, Math.min(sourceHeight, rawBox[3]));
+
+      canvas.width = sourceWidth;
+      canvas.height = sourceHeight;
+      canvas.style.left = `${offsetX}px`;
+      canvas.style.top = `${offsetY}px`;
+      canvas.style.width = `${renderedWidth}px`;
+      canvas.style.height = `${renderedHeight}px`;
+
+      const context = canvas.getContext('2d');
+      const color = LABEL_FOCUS_COLOR[detection.label] || '#111827';
+      context.clearRect(0, 0, sourceWidth, sourceHeight);
+      context.drawImage(sourceImage, 0, 0, sourceWidth, sourceHeight);
+
+      const boxWidth = Math.max(1, x2 - x1);
+      const boxHeight = Math.max(1, y2 - y1);
+      context.fillStyle = 'rgba(15, 23, 42, 0.58)';
+      context.fillRect(0, 0, sourceWidth, sourceHeight);
+      context.drawImage(sourceImage, x1, y1, boxWidth, boxHeight, x1, y1, boxWidth, boxHeight);
+
+      const centerX = x1 + boxWidth / 2;
+      const centerY = y1 + boxHeight / 2;
+      context.save();
+      context.strokeStyle = 'rgba(255, 255, 255, 0.72)';
+      context.lineWidth = Math.max(1, Math.round(sourceWidth / 700));
+      context.setLineDash([8, 7]);
+      context.beginPath();
+      context.moveTo(0, centerY); context.lineTo(x1, centerY);
+      context.moveTo(x2, centerY); context.lineTo(sourceWidth, centerY);
+      context.moveTo(centerX, 0); context.lineTo(centerX, y1);
+      context.moveTo(centerX, y2); context.lineTo(centerX, sourceHeight);
+      context.stroke();
+      context.restore();
+
+      const lineWidth = Math.max(2, Math.round(sourceWidth / 260));
+      context.strokeStyle = color;
+      context.lineWidth = lineWidth;
+      context.setLineDash(activeDetectionFocus.group === 'uncertain' ? [10, 7] : []);
+      context.strokeRect(
+        x1 + lineWidth / 2,
+        y1 + lineWidth / 2,
+        Math.max(1, boxWidth - lineWidth),
+        Math.max(1, boxHeight - lineWidth)
+      );
+      context.setLineDash([]);
+
+      const labelText = `${detection.label} ${detection.conf}%`;
+      const fontSize = Math.max(13, Math.round(sourceWidth / 38));
+      const labelPadding = Math.max(4, Math.round(fontSize * 0.35));
+      context.font = `800 ${fontSize}px Arial, sans-serif`;
+      const labelWidth = context.measureText(labelText).width + labelPadding * 2;
+      const labelHeight = fontSize + labelPadding * 2;
+      const labelX = Math.max(0, Math.min(x1, sourceWidth - labelWidth));
+      const labelY = y1 >= labelHeight ? y1 - labelHeight : Math.min(sourceHeight - labelHeight, y1);
+      context.fillStyle = color;
+      context.fillRect(labelX, labelY, labelWidth, labelHeight);
+      context.fillStyle = '#ffffff';
+      context.textBaseline = 'middle';
+      context.fillText(labelText, labelX + labelPadding, labelY + labelHeight / 2);
+
+      focusHint.textContent = `Đang xem: ${detection.label} ${detection.conf}% · Bấm ảnh để bỏ chọn`;
+      overlay.classList.remove('hidden');
+    }
+
+    function clearDetectionFocus() {
+      document.querySelectorAll('.detection-select-card.is-selected').forEach(el => {
+        el.classList.remove('is-selected');
+        el.setAttribute('aria-pressed', 'false');
+      });
+      activeDetectionFocus = null;
+      const canvas = document.getElementById('detection-focus-canvas');
+      if (canvas) canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
+      document.getElementById('detection-focus-overlay')?.classList.add('hidden');
+    }
+
+    window.addEventListener('resize', updateDetectionFocus);
 
     function renderResultSummary(data) {
       const detections = data.detections;
@@ -726,7 +1311,9 @@
       document.getElementById('sum-avg-conf').textContent  = `${avgConf.toFixed(1)}%`;
       document.getElementById('sum-max-conf').textContent  = `${maxConf.toFixed(1)}%`;
       document.getElementById('sum-min-conf').textContent  = `${minConf.toFixed(1)}%`;
-      document.getElementById('sum-top-label').textContent = topLabel;
+      const topLabelEl = document.getElementById('sum-top-label');
+      topLabelEl.textContent = topLabel;
+      topLabelEl.className = `info-v class-label-value ${LABEL_CSS_CLASS[topLabel] || 'other'}`;
       document.getElementById('sum-time').textContent      = data.timing_ms ? `${data.timing_ms.total} ms` : '—';
       document.getElementById('sum-img-size').textContent  = data.image_size ? `${data.image_size.width}×${data.image_size.height}` : '—';
 
@@ -772,6 +1359,11 @@
        Video Upload & Nhận Diện
     ═══════════════════════════════════════════════════ */
     let videoPollTimer = null;
+    let videoUploadRequest = null;
+    let videoPreviewUrl = null;
+    let videoUploadToken = 0;
+    let currentVideoJobId = null;
+    let videoPlaybackRate = 1;
 
     function handleVideoFileSelect(input) {
       const f = input.files[0];
@@ -793,70 +1385,188 @@
     }
 
     async function uploadVideo(file) {
+      const allowedExtensions = ['mp4', 'mov', 'avi', 'mkv', 'webm'];
+      const extension = (file.name.split('.').pop() || '').toLowerCase();
+      if (!allowedExtensions.includes(extension)) {
+        videoUploadError('Định dạng video không được hỗ trợ.');
+        return;
+      }
+      if (file.size > 100 * 1024 * 1024) {
+        videoUploadError('File video vượt quá 100MB.');
+        return;
+      }
+
+      const token = ++videoUploadToken;
+      if (videoPollTimer) { clearTimeout(videoPollTimer); videoPollTimer = null; }
+      if (videoUploadRequest) { videoUploadRequest.abort(); videoUploadRequest = null; }
+      if (currentVideoJobId) {
+        fetch(`/api/video-cancel/${currentVideoJobId}`, { method: 'POST' }).catch(() => {});
+        currentVideoJobId = null;
+      }
+      if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+      videoPreviewUrl = URL.createObjectURL(file);
+
+      const original = document.getElementById('video-original');
+      original.src = videoPreviewUrl;
+      original.defaultPlaybackRate = videoPlaybackRate;
+      original.playbackRate = videoPlaybackRate;
+      original.onloadedmetadata = () => {
+        document.getElementById('video-info-duration').textContent = formatVideoDuration(original.duration);
+        document.getElementById('video-info-resolution').textContent = `${original.videoWidth}×${original.videoHeight}`;
+      };
+
+      document.getElementById('video-upload-area').classList.add('hidden');
+      document.getElementById('video-original-wrap').classList.remove('hidden');
+      document.getElementById('video-change-btn').classList.remove('hidden');
       document.getElementById('video-placeholder').classList.add('hidden');
-      document.getElementById('video-compare-wrap').classList.add('hidden');
+      document.getElementById('video-placeholder').classList.remove('is-error');
+      document.getElementById('video-result-content').classList.add('hidden');
+      const oldAnnotated = document.getElementById('video-annotated');
+      oldAnnotated.pause();
+      oldAnnotated.removeAttribute('src');
+      oldAnnotated.load();
       document.getElementById('video-progress-wrap').classList.remove('hidden');
-      document.getElementById('video-progress-text').textContent = 'Đang tải lên...';
+      document.getElementById('video-extra').classList.remove('hidden');
+      document.getElementById('video-download').classList.add('hidden');
+      document.getElementById('video-status-val').textContent = file.name;
+      document.getElementById('video-info-name').textContent = file.name;
+      document.getElementById('video-info-name').title = file.name;
+      document.getElementById('video-info-size').textContent = formatFileSize(file.size);
+      document.getElementById('video-progress-stage').textContent = 'Đang tải video lên...';
+      document.getElementById('video-progress-text').textContent = '0%';
+      document.getElementById('video-progress-val').textContent = '0%';
+      document.getElementById('video-progress-fill').style.width = '0%';
+      document.getElementById('video-result-badge').textContent = 'Đang tải lên';
+      document.getElementById('video-phase').textContent = 'Đang tải lên';
+      document.getElementById('video-upload-time').textContent = '—';
+      document.getElementById('video-processing-time').textContent = '—';
+      document.getElementById('video-processing-fps').textContent = '—';
+      document.getElementById('video-analysis-rate').textContent = '—';
+      document.getElementById('video-source-codec').textContent = '—';
+      resetVideoDetectionStats();
 
       const fd = new FormData();
       fd.append('file', file);
+      const uploadStartedAt = performance.now();
 
       try {
-        const r = await fetch('/api/upload-video', { method: 'POST', body: fd });
-        if (!r.ok) {
-          const err = await r.json().catch(() => ({}));
-          throw new Error(err.detail || `HTTP ${r.status}`);
-        }
-        const data = await r.json();
-        pollVideoStatus(data.job_id);
+        const data = await sendVideoWithProgress(fd, percent => {
+          if (token !== videoUploadToken) return;
+          const value = Math.min(100, percent);
+          document.getElementById('video-progress-text').textContent = `${value.toFixed(0)}%`;
+          document.getElementById('video-progress-val').textContent = `${value.toFixed(0)}% tải lên`;
+          document.getElementById('video-progress-fill').style.width = `${value}%`;
+        });
+        if (token !== videoUploadToken) return;
+        document.getElementById('video-upload-time').textContent = formatMilliseconds(performance.now() - uploadStartedAt);
+        document.getElementById('video-progress-fill').style.width = '0%';
+        document.getElementById('video-progress-val').textContent = '0% xử lý';
+        document.getElementById('video-progress-stage').textContent = 'Đang chuẩn bị video...';
+        document.getElementById('video-result-badge').textContent = 'Đang xử lý';
+        currentVideoJobId = data.job_id;
+        pollVideoStatus(data.job_id, token);
       } catch (err) {
+        if (token !== videoUploadToken || err.message === 'UPLOAD_ABORTED') return;
         videoUploadError(err.message);
+      } finally {
+        if (token === videoUploadToken) videoUploadRequest = null;
       }
     }
 
-    function pollVideoStatus(jobId) {
-      if (videoPollTimer) clearInterval(videoPollTimer);
-      videoPollTimer = setInterval(async () => {
+    function sendVideoWithProgress(formData, onProgress) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        videoUploadRequest = xhr;
+        xhr.open('POST', '/api/upload-video');
+        xhr.upload.onprogress = event => {
+          if (event.lengthComputable) onProgress(event.loaded / event.total * 100);
+        };
+        xhr.onload = () => {
+          let payload = {};
+          try { payload = JSON.parse(xhr.responseText || '{}'); } catch (_) {}
+          if (xhr.status >= 200 && xhr.status < 300) resolve(payload);
+          else reject(new Error(payload.detail || `HTTP ${xhr.status}`));
+        };
+        xhr.onerror = () => reject(new Error('Không thể tải video lên server.'));
+        xhr.onabort = () => reject(new Error('UPLOAD_ABORTED'));
+        xhr.send(formData);
+      });
+    }
+
+    function pollVideoStatus(jobId, token) {
+      if (videoPollTimer) clearTimeout(videoPollTimer);
+      const checkStatus = async () => {
+        if (token !== videoUploadToken) return;
         try {
           const r = await fetch(`/api/video-status/${jobId}`);
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
           const job = await r.json();
 
           if (job.status === 'processing') {
-            document.getElementById('video-progress-text').textContent = `${job.progress.toFixed(0)}%`;
+            updateVideoProgress(job);
+            videoPollTimer = setTimeout(checkStatus, 700);
           } else if (job.status === 'done') {
-            clearInterval(videoPollTimer);
             videoPollTimer = null;
+            currentVideoJobId = null;
             showVideoResult(job);
           } else if (job.status === 'error') {
-            clearInterval(videoPollTimer);
             videoPollTimer = null;
+            currentVideoJobId = null;
             videoUploadError(job.error || 'Xử lý video thất bại.');
+          } else if (job.status === 'cancelled') {
+            videoPollTimer = null;
+            currentVideoJobId = null;
           }
         } catch (err) {
-          clearInterval(videoPollTimer);
           videoPollTimer = null;
           videoUploadError(err.message);
         }
-      }, 1000);
+      };
+      checkStatus();
+    }
+
+    function updateVideoProgress(job) {
+      const phaseLabels = {
+        queued: 'Đang xếp hàng',
+        preparing: job.source_mode === 'remux' ? 'Đang chuẩn hóa nhanh video' : 'Đang chuyển đổi video',
+        processing: 'Đang nhận diện từng khung hình',
+        finalizing: 'Đang hoàn thiện video kết quả',
+      };
+      const progress = Number(job.progress || 0);
+      const phaseText = phaseLabels[job.phase] || 'Đang xử lý video';
+      document.getElementById('video-progress-stage').textContent = `${phaseText}...`;
+      document.getElementById('video-progress-text').textContent = `${progress.toFixed(0)}%`;
+      document.getElementById('video-progress-val').textContent = `${progress.toFixed(0)}% xử lý`;
+      document.getElementById('video-progress-fill').style.width = `${progress}%`;
+      document.getElementById('video-phase').textContent = phaseText;
+      if (job.width && job.height) document.getElementById('video-info-resolution').textContent = `${job.width}×${job.height}`;
+      if (job.duration_s) document.getElementById('video-info-duration').textContent = formatVideoDuration(job.duration_s);
+      if (job.source_codec) document.getElementById('video-source-codec').textContent = job.source_codec;
     }
 
     function showVideoResult(job) {
       document.getElementById('video-progress-wrap').classList.add('hidden');
-      document.getElementById('video-upload-panel').classList.add('hidden');
-      document.getElementById('video-compare-wrap').classList.remove('hidden');
+      document.getElementById('video-result-content').classList.remove('hidden');
+      document.getElementById('video-progress-val').textContent = '100%';
+      document.getElementById('video-progress-fill').style.width = '100%';
+      document.getElementById('video-status-val').textContent = 'Hoàn tất';
 
       const original  = document.getElementById('video-original');
       const annotated = document.getElementById('video-annotated');
       original.src  = `${job.original_url}?t=${Date.now()}`;
       annotated.src = `${job.result_url}?t=${Date.now()}`;
+      setVideoPlaybackRate(videoPlaybackRate);
+      const download = document.getElementById('video-download');
+      download.href = job.result_url;
+      download.classList.remove('hidden');
 
       syncVideoPair(original, annotated);
-      original.play().catch(() => {});
-      annotated.play().catch(() => {});
+      renderVideoStats(job);
     }
 
     function syncVideoPair(a, b) {
+      if (a.dataset.syncReady === 'true') return;
+      a.dataset.syncReady = 'true';
       let syncing = false;
       const sync = (src, dst) => {
         if (syncing) return;
@@ -871,35 +1581,273 @@
       b.addEventListener('pause', () => a.pause());
       b.addEventListener('seeked', () => sync(b, a));
       a.addEventListener('timeupdate', () => sync(a, b));
+      a.addEventListener('ratechange', () => syncVideoPlaybackRate(a, b));
+      b.addEventListener('ratechange', () => syncVideoPlaybackRate(b, a));
+    }
+
+    function setVideoPlaybackRate(value) {
+      const rate = Number(value);
+      const allowedRates = [0.5, 0.75, 1, 1.25, 1.5, 2];
+      videoPlaybackRate = allowedRates.includes(rate) ? rate : 1;
+      document.getElementById('video-speed-select').value = String(videoPlaybackRate);
+      ['video-original', 'video-annotated'].forEach(id => {
+        const video = document.getElementById(id);
+        video.defaultPlaybackRate = videoPlaybackRate;
+        if (Math.abs(video.playbackRate - videoPlaybackRate) > 0.01) {
+          video.playbackRate = videoPlaybackRate;
+        }
+      });
+    }
+
+    function syncVideoPlaybackRate(source, target) {
+      const allowedRates = [0.5, 0.75, 1, 1.25, 1.5, 2];
+      const closestRate = allowedRates.reduce((best, rate) =>
+        Math.abs(rate - source.playbackRate) < Math.abs(best - source.playbackRate) ? rate : best
+      , 1);
+      videoPlaybackRate = closestRate;
+      document.getElementById('video-speed-select').value = String(closestRate);
+      if (Math.abs(target.playbackRate - closestRate) > 0.01) target.playbackRate = closestRate;
+      if (Math.abs(source.playbackRate - closestRate) > 0.01) source.playbackRate = closestRate;
     }
 
     function videoUploadError(msg) {
       document.getElementById('video-progress-wrap').classList.add('hidden');
       document.getElementById('video-placeholder').classList.remove('hidden');
+      document.getElementById('video-placeholder').classList.add('is-error');
       document.getElementById('video-placeholder').innerHTML = `
-        <p style="color:#ef4444; text-align:center;">⚠ ${msg}</p>
+        <div class="placeholder-icon" aria-hidden="true">!</div>
+        <p class="placeholder-text">Không thể xử lý video</p>
+        <p id="video-error-detail" class="placeholder-sub"></p>
         <p class="placeholder-sub">Vui lòng thử lại với video khác</p>
       `;
+      document.getElementById('video-error-detail').textContent = msg;
+      document.getElementById('video-progress-val').textContent = 'Lỗi';
+      document.getElementById('video-phase').textContent = 'Xử lý thất bại';
+      document.getElementById('video-result-badge').textContent = 'Xử lý thất bại';
     }
 
     function resetVideoUpload() {
-      if (videoPollTimer) { clearInterval(videoPollTimer); videoPollTimer = null; }
+      videoUploadToken += 1;
+      if (videoPollTimer) { clearTimeout(videoPollTimer); videoPollTimer = null; }
+      if (videoUploadRequest) { videoUploadRequest.abort(); videoUploadRequest = null; }
+      if (videoPreviewUrl) { URL.revokeObjectURL(videoPreviewUrl); videoPreviewUrl = null; }
       document.getElementById('video-file-input').value = '';
-      document.getElementById('video-original').src = '';
-      document.getElementById('video-annotated').src = '';
-      document.getElementById('video-compare-wrap').classList.add('hidden');
-      document.getElementById('video-upload-panel').classList.remove('hidden');
+      ['video-original', 'video-annotated'].forEach(id => {
+        const video = document.getElementById(id);
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+      });
+      document.getElementById('video-upload-area').classList.remove('hidden');
+      document.getElementById('video-original-wrap').classList.add('hidden');
+      document.getElementById('video-change-btn').classList.add('hidden');
+      document.getElementById('video-result-content').classList.add('hidden');
+      document.getElementById('video-progress-wrap').classList.add('hidden');
+      document.getElementById('video-extra').classList.add('hidden');
+      document.getElementById('video-overview-chart').classList.add('hidden');
+      document.getElementById('video-download').classList.add('hidden');
       document.getElementById('video-placeholder').classList.remove('hidden');
+      document.getElementById('video-placeholder').classList.remove('is-error');
       document.getElementById('video-placeholder').innerHTML = `
         <div class="placeholder-icon" aria-hidden="true">
-          <svg viewBox="0 0 64 64" fill="none" width="64" height="64">
-            <circle cx="32" cy="32" r="30" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 4" opacity=".3"/>
-            <path d="M32 20v12M32 36v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <svg viewBox="0 0 64 64" fill="none" width="56" height="56">
+            <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="1.8" stroke-dasharray="6 4" opacity=".35"/>
+            <path d="M32 20v14M32 38v4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
           </svg>
         </div>
-        <p class="placeholder-text">Tải video lên để bắt đầu nhận diện</p>
-        <p class="placeholder-sub">Video gốc và video đã nhận diện sẽ phát song song</p>
+        <p class="placeholder-text">Tải video lên để bắt đầu phân tích</p>
+        <p class="placeholder-sub">Video có bounding box sẽ hiển thị tại đây</p>
       `;
+      document.getElementById('video-status-val').textContent = 'Chưa chọn video';
+      document.getElementById('video-progress-val').textContent = '—';
+      document.getElementById('video-time-val').textContent = '—';
+    }
+
+    function resetVideoDetectionStats() {
+      document.getElementById('video-detection-events').textContent = '—';
+      document.getElementById('video-detection-frames').textContent = '—';
+      document.getElementById('video-average-conf').textContent = '—';
+      const topLabel = document.getElementById('video-top-label');
+      topLabel.textContent = '—';
+      topLabel.className = 'info-v class-label-value';
+      document.getElementById('video-class-breakdown').innerHTML = '<div class="no-detection">Kết quả sẽ hiển thị sau khi xử lý xong.</div>';
+    }
+
+    function renderVideoStats(job) {
+      const processingMs = Number(job.processing_ms || 0);
+      document.getElementById('video-time-val').textContent = formatMilliseconds(processingMs);
+      document.getElementById('video-processing-time').textContent = formatMilliseconds(processingMs);
+      document.getElementById('video-processing-fps').textContent = `${Number(job.processing_fps || 0).toFixed(2)} FPS`;
+      const analyzedRate = Number(job.fps || 0) / Math.max(1, Number(job.inference_stride || 1));
+      document.getElementById('video-analysis-rate').textContent = `${analyzedRate.toFixed(1)} FPS`;
+      document.getElementById('video-phase').textContent = 'Hoàn tất';
+      document.getElementById('video-source-codec').textContent = job.source_codec || '—';
+      document.getElementById('video-info-duration').textContent = formatVideoDuration(job.duration_s);
+      document.getElementById('video-info-resolution').textContent = job.width && job.height ? `${job.width}×${job.height}` : '—';
+      document.getElementById('video-detection-events').textContent = Number(job.detection_events || 0).toLocaleString('vi-VN');
+      document.getElementById('video-detection-frames').textContent = `${Number(job.frames_with_detections || 0).toLocaleString('vi-VN')} / ${Number(job.analyzed_frames || job.processed_frames || 0).toLocaleString('vi-VN')}`;
+      document.getElementById('video-average-conf').textContent = job.detection_events ? `${Number(job.average_confidence).toFixed(1)}%` : '—';
+      document.getElementById('video-result-badge').textContent = `${Number(job.detection_events || 0).toLocaleString('vi-VN')} lượt phát hiện`;
+
+      const entries = Object.entries(job.class_counts || {}).sort((a, b) => b[1] - a[1]);
+      const topLabelEl = document.getElementById('video-top-label');
+      if (entries.length) {
+        topLabelEl.textContent = entries[0][0];
+        topLabelEl.className = `info-v class-label-value ${LABEL_CSS_CLASS[entries[0][0]] || 'other'}`;
+        const total = entries.reduce((sum, [, count]) => sum + count, 0);
+        document.getElementById('video-class-breakdown').innerHTML = entries.map(([label, count]) => `
+          <div class="breakdown-row">
+            <span class="det-label-chip ${LABEL_CSS_CLASS[label] || 'other'}">${label}</span>
+            <div class="breakdown-track"><div class="breakdown-fill" style="width:${count / total * 100}%"></div></div>
+            <span class="breakdown-count">${count.toLocaleString('vi-VN')}</span>
+          </div>
+        `).join('');
+      } else {
+        topLabelEl.textContent = '—';
+        topLabelEl.className = 'info-v class-label-value';
+        document.getElementById('video-class-breakdown').innerHTML = '<div class="no-detection">Không có lượt phát hiện nào.</div>';
+      }
+
+      renderVideoOverviewChart(job.class_counts || {}, job.class_avg_conf || {});
+    }
+
+    function formatFileSize(bytes) {
+      if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+      const units = ['B', 'KB', 'MB', 'GB'];
+      const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+      return `${(bytes / Math.pow(1024, index)).toFixed(index ? 1 : 0)} ${units[index]}`;
+    }
+
+    function formatVideoDuration(seconds) {
+      if (!Number.isFinite(Number(seconds)) || Number(seconds) <= 0) return '—';
+      const total = Math.round(Number(seconds));
+      const minutes = Math.floor(total / 60);
+      const remain = total % 60;
+      return `${minutes}:${String(remain).padStart(2, '0')}`;
+    }
+
+    function formatMilliseconds(ms) {
+      const value = Number(ms || 0);
+      if (value < 1000) return `${value.toFixed(0)} ms`;
+      return `${(value / 1000).toFixed(1)} s`;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       Overview Charts (donut + bar)
+    ═══════════════════════════════════════════════════ */
+    const OVERVIEW_COLORS = {
+      BIODEGRADABLE: '#22c55e',
+      GLASS:         '#a855f7',
+      METAL:         '#eab308',
+      PAPER:         '#f97316',
+      PLASTIC:       '#ef4444',
+    };
+
+    function renderDonut(svgId, entries, total) {
+      const svg = document.getElementById(svgId);
+      if (!svg) return;
+      const cx = 100, cy = 100, r = 80, innerR = 52;
+      if (!entries.length || total === 0) {
+        svg.innerHTML = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#f3f4f6" stroke="#e5e7eb" stroke-width="1"/>
+          <circle cx="${cx}" cy="${cy}" r="${innerR}" fill="#fff"/>`;
+        return;
+      }
+      let startAngle = -Math.PI / 2;
+      let paths = '';
+      entries.forEach(([label, count]) => {
+        const slice = (count / total) * 2 * Math.PI;
+        const endAngle = startAngle + slice;
+        const x1 = cx + r * Math.cos(startAngle);
+        const y1 = cy + r * Math.sin(startAngle);
+        const x2 = cx + r * Math.cos(endAngle);
+        const y2 = cy + r * Math.sin(endAngle);
+        const xi1 = cx + innerR * Math.cos(endAngle);
+        const yi1 = cy + innerR * Math.sin(endAngle);
+        const xi2 = cx + innerR * Math.cos(startAngle);
+        const yi2 = cy + innerR * Math.sin(startAngle);
+        const large = slice > Math.PI ? 1 : 0;
+        const color = OVERVIEW_COLORS[label] || '#64748b';
+        paths += `<path d="M${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} L${xi1},${yi1} A${innerR},${innerR} 0 ${large},0 ${xi2},${yi2} Z"
+          fill="${color}" stroke="#fff" stroke-width="2"/>`;
+        startAngle = endAngle;
+      });
+      svg.innerHTML = paths;
+    }
+
+    function renderOverviewBars(containerId, entries, total, formatVal) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      if (!entries.length) {
+        container.innerHTML = '<div class="overview-bar-empty">Không có dữ liệu</div>';
+        return;
+      }
+      const maxVal = Math.max(...entries.map(([, v]) => v));
+      container.innerHTML = entries.map(([label, val]) => {
+        const pct = maxVal > 0 ? (val / maxVal * 100).toFixed(1) : 0;
+        const color = OVERVIEW_COLORS[label] || '#64748b';
+        return `<div class="ov-bar-row">
+          <span class="ov-bar-label">${label}</span>
+          <div class="ov-bar-track"><div class="ov-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+          <span class="ov-bar-val">${formatVal(val, total)}</span>
+        </div>`;
+      }).join('');
+    }
+
+    function renderImageOverviewChart(detections) {
+      if (!detections || !detections.length) {
+        document.getElementById('img-overview-chart').classList.add('hidden');
+        return;
+      }
+      const byClass = {};
+      const confByClass = {};
+      detections.forEach(d => {
+        byClass[d.label] = (byClass[d.label] || 0) + 1;
+        if (!confByClass[d.label]) confByClass[d.label] = [];
+        confByClass[d.label].push(d.conf);
+      });
+      const countEntries = Object.entries(byClass).sort((a, b) => b[1] - a[1]);
+      const total = detections.length;
+
+      document.getElementById('img-donut-total').textContent = total;
+      renderDonut('img-donut-svg', countEntries, total);
+      renderOverviewBars('img-bar-chart', countEntries, total,
+        (v, t) => `${v} (${(v / t * 100).toFixed(0)}%)`);
+
+      const confEntries = countEntries.map(([label]) => {
+        const avg = confByClass[label].reduce((a, b) => a + b, 0) / confByClass[label].length;
+        return [label, avg];
+      });
+      renderOverviewBars('img-conf-chart', confEntries, 100,
+        (v) => `${v.toFixed(1)}%`);
+
+      document.getElementById('img-overview-chart').classList.remove('hidden');
+    }
+
+    function renderVideoOverviewChart(classCounts, classConf) {
+      const entries = Object.entries(classCounts || {}).sort((a, b) => b[1] - a[1]);
+      if (!entries.length) {
+        document.getElementById('video-overview-chart').classList.add('hidden');
+        return;
+      }
+      const total = entries.reduce((s, [, v]) => s + v, 0);
+
+      document.getElementById('video-donut-total').textContent = total.toLocaleString('vi-VN');
+      renderDonut('video-donut-svg', entries, total);
+      renderOverviewBars('video-bar-chart', entries, total,
+        (v, t) => `${v.toLocaleString('vi-VN')} (${(v / t * 100).toFixed(0)}%)`);
+
+      const confEntries = entries.map(([label]) => {
+        const avg = classConf && classConf[label] ? classConf[label] : 0;
+        return [label, avg];
+      }).filter(([, v]) => v > 0);
+      if (confEntries.length) {
+        renderOverviewBars('video-conf-chart', confEntries, 100,
+          (v) => `${Number(v).toFixed(1)}%`);
+      } else {
+        document.getElementById('video-conf-chart').innerHTML = '<div class="overview-bar-empty">Không có dữ liệu</div>';
+      }
+
+      document.getElementById('video-overview-chart').classList.remove('hidden');
     }
 
     /* ═══════════════════════════════════════════════════
@@ -936,9 +1884,19 @@
       document.getElementById('kpi-map5095').textContent   = pct(best.map50_95);
 
       document.getElementById('ti-dataset').textContent    = data.dataset;
+      document.getElementById('ti-run').textContent        = data.training_run;
       document.getElementById('ti-epochs').textContent     = data.total_epochs;
       document.getElementById('ti-best-epoch').textContent = `${best.epoch} / ${data.total_epochs}`;
       document.getElementById('ti-classes').textContent    = data.num_classes;
+      document.getElementById('ti-training-device').textContent = data.training_device;
+
+      const runtime = data.runtime_device || {};
+      const runtimeName = runtime.name && runtime.name !== runtime.type
+        ? `${runtime.type} · ${runtime.name}`
+        : (runtime.type || '—');
+      document.getElementById('ti-runtime-device').textContent = runtime.engine
+        ? `${runtimeName} · ${runtime.engine}`
+        : runtimeName;
 
       const counts = data.dataset_counts;
       const totalImgs = counts.train + counts.valid + counts.test;
@@ -961,17 +1919,50 @@
           <span class="label-bar-count">${count.toLocaleString('vi-VN')}</span>
         </div>
       `).join('');
+
+      const test = data.test_metrics;
+      const testContent = document.getElementById('test-eval-content');
+      const testEmpty = document.getElementById('test-eval-empty');
+      if (!test || !test.overall) {
+        testContent.classList.add('hidden');
+        testEmpty.classList.remove('hidden');
+        return;
+      }
+
+      testContent.classList.remove('hidden');
+      testEmpty.classList.add('hidden');
+      document.getElementById('test-precision').textContent = pct(test.overall.precision);
+      document.getElementById('test-recall').textContent    = pct(test.overall.recall);
+      document.getElementById('test-map50').textContent     = pct(test.overall.map50);
+      document.getElementById('test-map5095').textContent   = pct(test.overall.map50_95);
+
+      const inferenceMs = test.speed_ms_per_image?.inference;
+      const speedText = inferenceMs == null ? '' : ` · ${inferenceMs.toFixed(1)} ms suy luận/ảnh trên CPU`;
+      document.getElementById('test-meta').textContent =
+        `${test.images.toLocaleString('vi-VN')} ảnh · ${test.instances.toLocaleString('vi-VN')} vật thể · best.pt${speedText}`;
+
+      document.getElementById('test-class-body').innerHTML = (test.per_class || []).map(item => `
+        <tr>
+          <td><span class="test-class-dot" style="background:${LABEL_COLOR[item.name] || '#111827'}"></span>${item.name}</td>
+          <td>${item.instances.toLocaleString('vi-VN')}</td>
+          <td>${pct(item.precision)}</td>
+          <td>${pct(item.recall)}</td>
+          <td>${pct(item.map50)}</td>
+          <td>${pct(item.map50_95)}</td>
+        </tr>
+      `).join('');
     }
 
     /* ═══════════════════════════════════════════════════
        Init
     ═══════════════════════════════════════════════════ */
-    window.addEventListener('load', () => startStream());
+    window.addEventListener('load', initCamera);
     document.addEventListener('visibilitychange', () => {
       if (document.hidden && currentTab === 'webcam') {
-        stopStream();
+        stopStream(false);
       } else if (!document.hidden && currentTab === 'webcam') {
-        startStream();
+        if (cameraVisible) startStream();
+        else               stopStream(true);
       }
     });
   </script>

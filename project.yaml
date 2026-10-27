@@ -1,0 +1,52 @@
+project:
+  name: EcoVision AI
+  task: detect
+
+dataset:
+  name: PhanLoaiRac_5Class
+  version: 5
+  display_name: PhanLoaiRac_5Class_v5
+  yaml: data/dataset/data.yaml
+  roboflow_workspace: manh-luu-duc
+  roboflow_project: phanloairac_5class
+  classes:
+    - BIODEGRADABLE
+    - GLASS
+    - METAL
+    - PAPER
+    - PLASTIC
+  image_counts:
+    train: 6678
+    valid: 1919
+    test: 954
+  label_counts:
+    BIODEGRADABLE: 7843
+    GLASS: 7614
+    METAL: 5736
+    PAPER: 6803
+    PLASTIC: 5763
+
+training:
+  model: yolo11n.pt
+  run_name: PhanLoaiRac_5Class_v2
+  train_project: results/train
+  artifact_dir: results/figures/PhanLoaiRac_5Class_v2
+  epochs: 50
+  batch: 4
+  imgsz: 640
+  device: "0"
+  device_name: NVIDIA GeForce RTX 3050
+  workers: 2
+  optimizer: auto
+  pretrained: true
+  seed: 0
+  deterministic: true
+  amp: true
+  close_mosaic: 10
+
+inference:
+  webcam_confidence: 0.35
+  candidate_confidence: 0.25
+  confirmed_confidence: 0.50
+  iou: 0.50
+  imgsz: 640

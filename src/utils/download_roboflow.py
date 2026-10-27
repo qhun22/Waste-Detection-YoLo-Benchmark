@@ -1,35 +1,52 @@
-﻿import os
+"""Tải đúng dataset Roboflow được khai báo trong project.yaml."""
+
+from __future__ import annotations
+
+import argparse
 import shutil
-from roboflow import Roboflow
+from pathlib import Path
 
-def download_data():
+from project_config import CONFIG, ROOT_DIR, configure_console
 
-    rf = Roboflow(api_key="jSpRyxkSrSOYaBWQ0dJN")
-    project = rf.workspace("material-identification").project("garbage-classification-3")
-    version = project.version(2)
 
-    print("Đang tải dataset từ Roboflow...")
+DATASET_CFG = CONFIG["dataset"]
 
+
+def download(api_key: str, target: Path, force: bool = False) -> None:
+    from roboflow import Roboflow
+
+    target = target.resolve()
+    if target.exists() and any(target.iterdir()) and not force:
+        raise FileExistsError(
+            f"Thư mục {target} đã có dữ liệu. Dùng --force nếu chắc chắn muốn thay thế."
+        )
+
+    roboflow = Roboflow(api_key=api_key)
+    project = roboflow.workspace(DATASET_CFG["roboflow_workspace"]).project(
+        DATASET_CFG["roboflow_project"]
+    )
+    version = project.version(int(DATASET_CFG["version"]))
+    print(f"Đang tải {DATASET_CFG['roboflow_project']} v{DATASET_CFG['version']}...")
     dataset = version.download("yolov8")
+    source = Path(dataset.location).resolve()
 
-    target_dir = os.path.abspath("data/dataset")
-    source_dir = os.path.abspath(dataset.location)
+    if source != target:
+        if force and target.exists():
+            shutil.rmtree(target)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(source), str(target))
+    print(f"Tải xong: {target}")
 
-    if source_dir != target_dir:
-        os.makedirs(target_dir, exist_ok=True)
-        for item in os.listdir(source_dir):
-            s = os.path.join(source_dir, item)
-            d = os.path.join(target_dir, item)
-            if os.path.exists(d):
-                if os.path.isdir(d):
-                    shutil.rmtree(d)
-                else:
-                    os.remove(d)
-            shutil.move(s, d)
-        if os.path.exists(source_dir) and source_dir != os.path.abspath("."):
-            shutil.rmtree(source_dir, ignore_errors=True)
 
-    print(f"\n=> Tải dữ liệu thành công! Vị trí: {target_dir}")
+def main() -> None:
+    configure_console()
+    parser = argparse.ArgumentParser(description="Tải dataset Roboflow cho EcoVision AI")
+    parser.add_argument("--api-key", required=True, help="Roboflow API key")
+    parser.add_argument("--target", type=Path, default=ROOT_DIR / "data" / "dataset")
+    parser.add_argument("--force", action="store_true", help="Thay thế dataset đang tồn tại")
+    args = parser.parse_args()
+    download(args.api_key, args.target, args.force)
+
 
 if __name__ == "__main__":
-    download_data()
+    main()

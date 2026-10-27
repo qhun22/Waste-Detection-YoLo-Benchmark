@@ -1,0 +1,65 @@
+{
+  "split": "Test",
+  "evaluated_at": "2026-10-23",
+  "model": "weights/best.pt",
+  "images": 954,
+  "instances": 3226,
+  "settings": {
+    "imgsz": 640,
+    "device": "CPU",
+    "ultralytics": "8.4.155"
+  },
+  "speed_ms_per_image": {
+    "preprocess": 0.9,
+    "inference": 43.1,
+    "postprocess": 0.9
+  },
+  "overall": {
+    "precision": 0.8015163799750686,
+    "recall": 0.6665572917024527,
+    "map50": 0.7634890449507856,
+    "map50_95": 0.5883535703136815
+  },
+  "per_class": [
+    {
+      "name": "BIODEGRADABLE",
+      "instances": 776,
+      "precision": 0.83405406331884,
+      "recall": 0.628257920504949,
+      "map50": 0.7573879131124217,
+      "map50_95": 0.5732007233156167
+    },
+    {
+      "name": "GLASS",
+      "instances": 596,
+      "precision": 0.8319038616231519,
+      "recall": 0.7684563758389261,
+      "map50": 0.852190410889487,
+      "map50_95": 0.6771848346792803
+    },
+    {
+      "name": "METAL",
+      "instances": 507,
+      "precision": 0.7862301849887366,
+      "recall": 0.7080867850098619,
+      "map50": 0.7867690751522795,
+      "map50_95": 0.6112293921588092
+    },
+    {
+      "name": "PAPER",
+      "instances": 755,
+      "precision": 0.8114185090285845,
+      "recall": 0.6291390728476821,
+      "map50": 0.7257106429683851,
+      "map50_95": 0.590845306187674
+    },
+    {
+      "name": "PLASTIC",
+      "instances": 592,
+      "precision": 0.7439752809160299,
+      "recall": 0.5988463043108445,
+      "map50": 0.6953871826313546,
+      "map50_95": 0.48930759522702727
+    }
+  ]
+}
