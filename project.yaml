@@ -50,3 +50,6 @@ inference:
   confirmed_confidence: 0.50
   iou: 0.50
   imgsz: 640
+  video_imgsz: 320
+  video_inference_fps: 5
+  video_max_mb: 20
